@@ -1,0 +1,928 @@
+# CA Dashboard Frontend - Comprehensive Test Cases
+
+## Project Overview
+CA Dashboard is a React-based asset management application built with Vite, featuring:
+- Authentication system with JWT tokens
+- Asset management (CRUD operations)
+- Financial year management
+- Multiple asset types, manufacturers, and vendors
+- Dashboard with analytics and charts
+- Responsive design with shadcn/ui components
+
+## Test Environment Setup
+- **Frontend URL**: http://localhost:5173 (Vite dev server)
+- **Backend API**: http://192.168.0.190:8000/api
+- **Test Browser**: Chrome 115+ (as specified in footer)
+- **Test Data**: Use organization ID 962834 for testing
+
+---
+
+## 1. AUTHENTICATION TESTS
+
+### 1.1 Login Page Tests
+**Test Case ID**: AUTH-001
+**Test Name**: Login Page Load
+**Description**: Verify login page loads correctly
+**Steps**:
+1. Navigate to http://localhost:5173/login
+2. Verify page loads without errors
+3. Check all UI elements are visible (logo, form fields, buttons)
+**Expected Result**: Login page displays with all elements properly rendered
+
+**Test Case ID**: AUTH-002
+**Test Name**: Login Form Validation - Empty Fields
+**Description**: Test form validation for empty fields
+**Steps**:
+1. Click Login button without entering credentials
+2. Verify validation messages appear
+**Expected Result**: "Username is required" and "Password is required" messages displayed
+
+**Test Case ID**: AUTH-003
+**Test Name**: Login Form Validation - Invalid Credentials
+**Description**: Test login with invalid credentials
+**Steps**:
+1. Enter invalid email: "invalid@test.com"
+2. Enter invalid password: "wrongpass"
+3. Click Login button
+**Expected Result**: Error message "Invalid email or password" displayed
+
+**Test Case ID**: AUTH-004
+**Test Name**: Login Form Validation - Valid Credentials
+**Description**: Test successful login
+**Steps**:
+1. Enter valid email: "admin@example.com"
+2. Enter valid password: "admin123"
+3. Click Login button
+**Expected Result**: User redirected to dashboard, success message "Namaste..!! Welcome to CADASHBOARD" displayed
+
+**Test Case ID**: AUTH-005
+**Test Name**: Password Visibility Toggle
+**Description**: Test password show/hide functionality
+**Steps**:
+1. Enter password in password field
+2. Click eye icon to show password
+3. Click eye icon again to hide password
+**Expected Result**: Password visibility toggles correctly
+
+**Test Case ID**: AUTH-006
+**Test Name**: Remember Me Checkbox
+**Description**: Test remember me functionality
+**Steps**:
+1. Check "Remember me" checkbox
+2. Login successfully
+3. Close browser and reopen
+4. Navigate to login page
+**Expected Result**: User remains logged in (if implemented)
+
+**Test Case ID**: AUTH-007
+**Test Name**: OTP Login Tab
+**Description**: Test OTP login functionality
+**Steps**:
+1. Click "Login with OTP" tab
+2. Enter mobile number
+3. Click "Send OTP" button
+**Expected Result**: OTP request sent (mock implementation)
+
+### 1.2 Authentication Context Tests
+**Test Case ID**: AUTH-008
+**Test Name**: Token Storage
+**Description**: Verify JWT tokens are stored correctly
+**Steps**:
+1. Login successfully
+2. Check browser localStorage
+**Expected Result**: access_token, refresh_token, token_expiry, and user data stored
+
+**Test Case ID**: AUTH-009
+**Test Name**: Token Expiry Handling
+**Description**: Test token expiry handling
+**Steps**:
+1. Login successfully
+2. Manually set token_expiry to past time in localStorage
+3. Navigate to protected route
+**Expected Result**: User redirected to login page with "Session expired" message
+
+**Test Case ID**: AUTH-010
+**Test Name**: Logout Functionality
+**Description**: Test logout process
+**Steps**:
+1. Login successfully
+2. Click logout button
+3. Verify user is logged out
+**Expected Result**: User redirected to login page, all tokens cleared from localStorage
+
+---
+
+## 2. ROUTING TESTS
+
+### 2.1 Route Protection Tests
+**Test Case ID**: ROUTE-001
+**Test Name**: Protected Route Access - Authenticated User
+**Description**: Test access to protected routes when authenticated
+**Steps**:
+1. Login successfully
+2. Navigate to /assets, /reports, /settings
+**Expected Result**: All protected routes accessible
+
+**Test Case ID**: ROUTE-002
+**Test Name**: Protected Route Access - Unauthenticated User
+**Description**: Test access to protected routes when not authenticated
+**Steps**:
+1. Clear localStorage (logout)
+2. Navigate to /assets
+**Expected Result**: User redirected to /login
+
+**Test Case ID**: ROUTE-003
+**Test Name**: Public Route Access
+**Description**: Test access to public routes
+**Steps**:
+1. Navigate to /login without authentication
+**Expected Result**: Login page loads successfully
+
+### 2.2 Route Navigation Tests
+**Test Case ID**: ROUTE-004
+**Test Name**: Sidebar Navigation
+**Description**: Test navigation through sidebar menu
+**Steps**:
+1. Login successfully
+2. Click each menu item in sidebar
+3. Verify correct page loads
+**Expected Result**: Each menu item navigates to correct page
+
+**Test Case ID**: ROUTE-005
+**Test Name**: Page Title Display
+**Description**: Test page titles are displayed correctly
+**Steps**:
+1. Navigate to each page
+2. Check page title in header
+**Expected Result**: Correct page title displayed for each route
+
+---
+
+## 3. ASSET MANAGEMENT TESTS
+
+### 3.1 Asset Dashboard Tests
+**Test Case ID**: ASSET-001
+**Test Name**: Asset Dashboard Load
+**Description**: Test asset dashboard loads with data
+**Steps**:
+1. Login successfully
+2. Navigate to dashboard (/)
+3. Verify dashboard loads
+**Expected Result**: Dashboard displays with asset statistics and charts
+
+**Test Case ID**: ASSET-002
+**Test Name**: Asset Statistics Display
+**Description**: Test asset statistics are calculated correctly
+**Steps**:
+1. Navigate to dashboard
+2. Check total assets count
+3. Check status-wise asset counts
+**Expected Result**: Statistics match actual asset data
+
+**Test Case ID**: ASSET-003
+**Test Name**: Financial Year Filter
+**Description**: Test financial year filtering on dashboard
+**Steps**:
+1. Select different financial year from dropdown
+2. Verify dashboard data updates
+**Expected Result**: Asset data filtered by selected financial year
+
+### 3.2 Asset Details Tests
+**Test Case ID**: ASSET-004
+**Test Name**: Asset List Load
+**Description**: Test asset details page loads with data
+**Steps**:
+1. Navigate to /assets/details
+2. Verify asset list loads
+**Expected Result**: Asset list displays with pagination
+
+**Test Case ID**: ASSET-005
+**Test Name**: Asset Search Functionality
+**Description**: Test asset search feature
+**Steps**:
+1. Navigate to /assets/details
+2. Enter search term in search box
+3. Verify search results
+**Expected Result**: Assets filtered by search term
+
+**Test Case ID**: ASSET-006
+**Test Name**: Asset Pagination
+**Description**: Test asset list pagination
+**Steps**:
+1. Navigate to /assets/details
+2. Click next/previous page buttons
+3. Change page size
+**Expected Result**: Pagination works correctly
+
+**Test Case ID**: ASSET-007
+**Test Name**: Asset Creation
+**Description**: Test creating new asset
+**Steps**:
+1. Navigate to /assets/details
+2. Click "Add Asset" button
+3. Fill required fields (model, serial number, etc.)
+4. Submit form
+**Expected Result**: New asset created successfully
+
+**Test Case ID**: ASSET-008
+**Test Name**: Asset Duplicate Check
+**Description**: Test duplicate asset prevention
+**Steps**:
+1. Create asset with model "Test Model" and serial "12345"
+2. Try to create another asset with same model and serial
+**Expected Result**: Duplicate warning displayed, asset not created
+
+**Test Case ID**: ASSET-009
+**Test Name**: Asset Update
+**Description**: Test updating existing asset
+**Steps**:
+1. Navigate to asset details
+2. Click edit button on an asset
+3. Modify asset details
+4. Save changes
+**Expected Result**: Asset updated successfully
+
+**Test Case ID**: ASSET-010
+**Test Name**: Asset Deletion
+**Description**: Test deleting asset
+**Steps**:
+1. Navigate to asset details
+2. Click delete button on an asset
+3. Confirm deletion
+**Expected Result**: Asset deleted successfully (soft delete)
+
+### 3.3 Asset Types Tests
+**Test Case ID**: ASSET-011
+**Test Name**: Asset Types List
+**Description**: Test asset types page loads
+**Steps**:
+1. Navigate to /assets/types
+2. Verify asset types list displays
+**Expected Result**: Asset types list loads with data
+
+**Test Case ID**: ASSET-012
+**Test Name**: Asset Type Creation
+**Description**: Test creating new asset type
+**Steps**:
+1. Navigate to /assets/types
+2. Click "Add Asset Type" button
+3. Fill required fields (name, prefix, depreciation rate)
+4. Submit form
+**Expected Result**: New asset type created successfully
+
+**Test Case ID**: ASSET-013
+**Test Name**: Asset Type Update
+**Description**: Test updating asset type
+**Steps**:
+1. Navigate to /assets/types
+2. Click edit on an asset type
+3. Modify details
+4. Save changes
+**Expected Result**: Asset type updated successfully
+
+**Test Case ID**: ASSET-014
+**Test Name**: Asset Type Deletion
+**Description**: Test deleting asset type
+**Steps**:
+1. Navigate to /assets/types
+2. Click delete on an asset type
+3. Confirm deletion
+**Expected Result**: Asset type deleted successfully
+
+### 3.4 Asset Manufacturers Tests
+**Test Case ID**: ASSET-015
+**Test Name**: Manufacturers List
+**Description**: Test manufacturers page loads
+**Steps**:
+1. Navigate to /assets/manufacturers
+2. Verify manufacturers list displays
+**Expected Result**: Manufacturers list loads with data
+
+**Test Case ID**: ASSET-016
+**Test Name**: Manufacturer Creation
+**Description**: Test creating new manufacturer
+**Steps**:
+1. Navigate to /assets/manufacturers
+2. Click "Add Manufacturer" button
+3. Fill required fields (name, description)
+4. Submit form
+**Expected Result**: New manufacturer created successfully
+
+### 3.5 Asset Vendors Tests
+**Test Case ID**: ASSET-017
+**Test Name**: Vendors List
+**Description**: Test vendors page loads
+**Steps**:
+1. Navigate to /assets/vendors
+2. Verify vendors list displays
+**Expected Result**: Vendors list loads with data
+
+**Test Case ID**: ASSET-018
+**Test Name**: Vendor Creation
+**Description**: Test creating new vendor
+**Steps**:
+1. Navigate to /assets/vendors
+2. Click "Add Vendor" button
+3. Fill required fields (name, contact, email, etc.)
+4. Submit form
+**Expected Result**: New vendor created successfully
+
+---
+
+## 4. API INTEGRATION TESTS
+
+### 4.1 Authentication API Tests
+**Test Case ID**: API-001
+**Test Name**: Login API Call
+**Description**: Test login API integration
+**Steps**:
+1. Open browser dev tools (Network tab)
+2. Attempt login with valid credentials
+3. Check API call to /auth/test-token/
+**Expected Result**: API call successful, returns tokens and user data
+
+**Test Case ID**: API-002
+**Test Name**: Token Refresh API
+**Description**: Test token refresh functionality
+**Steps**:
+1. Login successfully
+2. Wait for token to expire or manually trigger refresh
+3. Check API call to /token/refresh/
+**Expected Result**: New access token received
+
+**Test Case ID**: API-003
+**Test Name**: Logout API Call
+**Description**: Test logout API integration
+**Steps**:
+1. Login successfully
+2. Click logout
+3. Check API call to /auth/logout/
+**Expected Result**: Logout API call successful
+
+### 4.2 Asset API Tests
+**Test Case ID**: API-004
+**Test Name**: Asset Details API
+**Description**: Test asset details API integration
+**Steps**:
+1. Navigate to /assets/details
+2. Check API call to /api/assets/asset-details/
+**Expected Result**: Asset data retrieved successfully
+
+**Test Case ID**: API-005
+**Test Name**: Asset Types API
+**Description**: Test asset types API integration
+**Steps**:
+1. Navigate to /assets/types
+2. Check API call to /api/assets/asset-types/
+**Expected Result**: Asset types data retrieved successfully
+
+**Test Case ID**: API-006
+**Test Name**: Manufacturers API
+**Description**: Test manufacturers API integration
+**Steps**:
+1. Navigate to /assets/manufacturers
+2. Check API call to /api/assets/manufacturers/
+**Expected Result**: Manufacturers data retrieved successfully
+
+**Test Case ID**: API-007
+**Test Name**: Vendors API
+**Description**: Test vendors API integration
+**Steps**:
+1. Navigate to /assets/vendors
+2. Check API call to /api/assets/asset-vendors/
+**Expected Result**: Vendors data retrieved successfully
+
+### 4.3 Error Handling Tests
+**Test Case ID**: API-008
+**Test Name**: Network Error Handling
+**Description**: Test handling of network errors
+**Steps**:
+1. Disconnect internet
+2. Try to perform API operations
+**Expected Result**: Appropriate error messages displayed
+
+**Test Case ID**: API-009
+**Test Name**: 401 Unauthorized Handling
+**Description**: Test handling of 401 errors
+**Steps**:
+1. Login successfully
+2. Manually modify token in localStorage to invalid value
+3. Try to access protected resources
+**Expected Result**: User redirected to login page
+
+**Test Case ID**: API-010
+**Test Name**: 500 Server Error Handling
+**Description**: Test handling of server errors
+**Steps**:
+1. Mock server to return 500 error
+2. Try to perform API operations
+**Expected Result**: "Server error" message displayed
+
+---
+
+## 5. UI/UX TESTS
+
+### 5.1 Responsive Design Tests
+**Test Case ID**: UI-001
+**Test Name**: Mobile Responsiveness
+**Description**: Test application on mobile devices
+**Steps**:
+1. Open application on mobile device or resize browser to mobile width
+2. Navigate through all pages
+3. Test all functionality
+**Expected Result**: Application works correctly on mobile devices
+
+**Test Case ID**: UI-002
+**Test Name**: Tablet Responsiveness
+**Description**: Test application on tablet devices
+**Steps**:
+1. Open application on tablet or resize browser to tablet width
+2. Navigate through all pages
+3. Test all functionality
+**Expected Result**: Application works correctly on tablet devices
+
+**Test Case ID**: UI-003
+**Test Name**: Desktop Responsiveness
+**Description**: Test application on desktop
+**Steps**:
+1. Open application on desktop browser
+2. Navigate through all pages
+3. Test all functionality
+**Expected Result**: Application works correctly on desktop
+
+### 5.2 Component Tests
+**Test Case ID**: UI-004
+**Test Name**: shadcn/ui Components
+**Description**: Test all shadcn/ui components work correctly
+**Steps**:
+1. Navigate through all pages
+2. Interact with buttons, forms, modals, dropdowns
+3. Check component styling and behavior
+**Expected Result**: All components render and function correctly
+
+**Test Case ID**: UI-005
+**Test Name**: Form Validation UI
+**Description**: Test form validation UI feedback
+**Steps**:
+1. Fill forms with invalid data
+2. Check validation messages and styling
+3. Fill forms with valid data
+4. Check success feedback
+**Expected Result**: Clear validation feedback provided
+
+**Test Case ID**: UI-006
+**Test Name**: Loading States
+**Description**: Test loading states display correctly
+**Steps**:
+1. Perform actions that trigger API calls
+2. Check loading spinners and states
+3. Verify loading states disappear after completion
+**Expected Result**: Loading states displayed appropriately
+
+### 5.3 Navigation Tests
+**Test Case ID**: UI-007
+**Test Name**: Sidebar Navigation
+**Description**: Test sidebar navigation functionality
+**Steps**:
+1. Click each menu item in sidebar
+2. Verify active state highlighting
+3. Test collapsible menu items
+**Expected Result**: Navigation works smoothly with proper visual feedback
+
+**Test Case ID**: UI-008
+**Test Name**: Breadcrumb Navigation
+**Description**: Test breadcrumb navigation (if implemented)
+**Steps**:
+1. Navigate to nested pages
+2. Check breadcrumb display
+3. Click breadcrumb items
+**Expected Result**: Breadcrumbs display correctly and navigation works
+
+---
+
+## 6. PERFORMANCE TESTS
+
+### 6.1 Page Load Performance
+**Test Case ID**: PERF-001
+**Test Name**: Initial Page Load Time
+**Description**: Test initial page load performance
+**Steps**:
+1. Clear browser cache
+2. Open application
+3. Measure time to first contentful paint
+**Expected Result**: Page loads within 3 seconds
+
+**Test Case ID**: PERF-002
+**Test Name**: Asset List Load Performance
+**Description**: Test asset list loading performance
+**Steps**:
+1. Navigate to /assets/details
+2. Measure time to load asset list
+**Expected Result**: Asset list loads within 2 seconds
+
+**Test Case ID**: PERF-003
+**Test Name**: Dashboard Load Performance
+**Description**: Test dashboard loading performance
+**Steps**:
+1. Navigate to dashboard
+2. Measure time to load all dashboard components
+**Expected Result**: Dashboard loads within 3 seconds
+
+### 6.2 API Performance Tests
+**Test Case ID**: PERF-004
+**Test Name**: API Response Time
+**Description**: Test API response times
+**Steps**:
+1. Monitor network tab during API calls
+2. Check response times for various endpoints
+**Expected Result**: API responses within 2 seconds
+
+**Test Case ID**: PERF-005
+**Test Name**: Large Dataset Handling
+**Description**: Test application with large datasets
+**Steps**:
+1. Load application with large number of assets
+2. Test pagination and filtering
+3. Check performance
+**Expected Result**: Application handles large datasets efficiently
+
+---
+
+## 7. SECURITY TESTS
+
+### 7.1 Authentication Security
+**Test Case ID**: SEC-001
+**Test Name**: Token Security
+**Description**: Test JWT token security
+**Steps**:
+1. Login successfully
+2. Check token storage in localStorage
+3. Verify token format and expiration
+**Expected Result**: Tokens stored securely with proper expiration
+
+**Test Case ID**: SEC-002
+**Test Name**: XSS Prevention
+**Description**: Test XSS attack prevention
+**Steps**:
+1. Try to inject script tags in input fields
+2. Check if scripts are executed
+**Expected Result**: Scripts are not executed, input is sanitized
+
+**Test Case ID**: SEC-003
+**Test Name**: CSRF Protection
+**Description**: Test CSRF protection
+**Steps**:
+1. Check if CSRF tokens are used in API calls
+2. Verify token validation
+**Expected Result**: CSRF protection implemented
+
+### 7.2 Data Security
+**Test Case ID**: SEC-004
+**Test Name**: Sensitive Data Exposure
+**Description**: Test for sensitive data exposure
+**Steps**:
+1. Check browser dev tools for sensitive data
+2. Verify data is not exposed in console logs
+**Expected Result**: No sensitive data exposed in client-side code
+
+---
+
+## 8. BROWSER COMPATIBILITY TESTS
+
+### 8.1 Chrome Browser Tests
+**Test Case ID**: BROWSER-001
+**Test Name**: Chrome 115+ Compatibility
+**Description**: Test application on Chrome 115+
+**Steps**:
+1. Open application in Chrome 115+
+2. Test all functionality
+3. Check for console errors
+**Expected Result**: Application works perfectly on Chrome 115+
+
+**Test Case ID**: BROWSER-002
+**Test Name**: Chrome DevTools Integration
+**Description**: Test application with Chrome DevTools
+**Steps**:
+1. Open Chrome DevTools
+2. Test application functionality
+3. Check for performance issues
+**Expected Result**: Application works correctly with DevTools open
+
+### 8.2 Other Browser Tests
+**Test Case ID**: BROWSER-003
+**Test Name**: Firefox Compatibility
+**Description**: Test application on Firefox
+**Steps**:
+1. Open application in Firefox
+2. Test all functionality
+3. Check for console errors
+**Expected Result**: Application works on Firefox
+
+**Test Case ID**: BROWSER-004
+**Test Name**: Safari Compatibility
+**Description**: Test application on Safari
+**Steps**:
+1. Open application in Safari
+2. Test all functionality
+3. Check for console errors
+**Expected Result**: Application works on Safari
+
+**Test Case ID**: BROWSER-005
+**Test Name**: Edge Compatibility
+**Description**: Test application on Edge
+**Steps**:
+1. Open application in Edge
+2. Test all functionality
+3. Check for console errors
+**Expected Result**: Application works on Edge
+
+---
+
+## 9. DATA VALIDATION TESTS
+
+### 9.1 Form Validation Tests
+**Test Case ID**: VAL-001
+**Test Name**: Required Field Validation
+**Description**: Test validation of required fields
+**Steps**:
+1. Try to submit forms without required fields
+2. Check validation messages
+**Expected Result**: Appropriate validation messages displayed
+
+**Test Case ID**: VAL-002
+**Test Name**: Email Format Validation
+**Description**: Test email format validation
+**Steps**:
+1. Enter invalid email formats
+2. Check validation messages
+**Expected Result**: Invalid email format rejected
+
+**Test Case ID**: VAL-003
+**Test Name**: Number Field Validation
+**Description**: Test number field validation
+**Steps**:
+1. Enter non-numeric values in number fields
+2. Check validation messages
+**Expected Result**: Non-numeric values rejected
+
+**Test Case ID**: VAL-004
+**Test Name**: Date Field Validation
+**Description**: Test date field validation
+**Steps**:
+1. Enter invalid date formats
+2. Check validation messages
+**Expected Result**: Invalid date formats rejected
+
+### 9.2 Business Logic Validation
+**Test Case ID**: VAL-005
+**Test Name**: Asset Duplicate Validation
+**Description**: Test asset duplicate validation
+**Steps**:
+1. Create asset with existing model and serial
+2. Check validation response
+**Expected Result**: Duplicate asset creation prevented
+
+**Test Case ID**: VAL-006
+**Test Name**: Financial Year Validation
+**Description**: Test financial year validation
+**Steps**:
+1. Select invalid financial year combinations
+2. Check validation response
+**Expected Result**: Invalid financial year combinations rejected
+
+---
+
+## 10. INTEGRATION TESTS
+
+### 10.1 End-to-End Workflow Tests
+**Test Case ID**: E2E-001
+**Test Name**: Complete Asset Management Workflow
+**Description**: Test complete asset management workflow
+**Steps**:
+1. Login to application
+2. Create new asset type
+3. Create new manufacturer
+4. Create new vendor
+5. Create new asset using above data
+6. Update asset details
+7. Delete asset
+**Expected Result**: Complete workflow executes successfully
+
+**Test Case ID**: E2E-002
+**Test Name**: Financial Year Change Workflow
+**Description**: Test financial year change workflow
+**Steps**:
+1. Login to application
+2. Select different financial year
+3. Verify all data updates accordingly
+4. Create new asset in new financial year
+**Expected Result**: Financial year change affects all relevant data
+
+**Test Case ID**: E2E-003
+**Test Name**: User Session Workflow
+**Description**: Test complete user session workflow
+**Steps**:
+1. Login to application
+2. Navigate through all pages
+3. Perform various operations
+4. Logout
+5. Try to access protected routes
+**Expected Result**: Session management works correctly
+
+---
+
+## 11. ACCESSIBILITY TESTS
+
+### 11.1 Keyboard Navigation
+**Test Case ID**: A11Y-001
+**Test Name**: Keyboard Navigation
+**Description**: Test keyboard navigation through application
+**Steps**:
+1. Use Tab key to navigate through interface
+2. Use Enter/Space to activate elements
+3. Use arrow keys for dropdowns
+**Expected Result**: All functionality accessible via keyboard
+
+**Test Case ID**: A11Y-002
+**Test Name**: Focus Management
+**Description**: Test focus management
+**Steps**:
+1. Navigate through forms using Tab
+2. Check focus indicators
+3. Test focus after modal close
+**Expected Result**: Focus managed correctly throughout application
+
+### 11.2 Screen Reader Compatibility
+**Test Case ID**: A11Y-003
+**Test Name**: Screen Reader Support
+**Description**: Test screen reader compatibility
+**Steps**:
+1. Use screen reader to navigate application
+2. Check for proper ARIA labels
+3. Test form announcements
+**Expected Result**: Application accessible via screen reader
+
+---
+
+## 12. ERROR HANDLING TESTS
+
+### 12.1 Network Error Tests
+**Test Case ID**: ERR-001
+**Test Name**: Network Disconnection
+**Description**: Test behavior when network is disconnected
+**Steps**:
+1. Disconnect internet
+2. Try to perform API operations
+3. Reconnect internet
+4. Check recovery behavior
+**Expected Result**: Appropriate error messages and recovery
+
+**Test Case ID**: ERR-002
+**Test Name**: Slow Network
+**Description**: Test behavior on slow network
+**Steps**:
+1. Throttle network to slow speed
+2. Perform various operations
+3. Check loading states
+**Expected Result**: Loading states displayed, operations complete
+
+### 12.2 Data Error Tests
+**Test Case ID**: ERR-003
+**Test Name**: Invalid API Response
+**Description**: Test handling of invalid API responses
+**Steps**:
+1. Mock API to return invalid data
+2. Check application behavior
+**Expected Result**: Application handles invalid data gracefully
+
+**Test Case ID**: ERR-004
+**Test Name**: Empty Data Response
+**Description**: Test handling of empty data responses
+**Steps**:
+1. Mock API to return empty data
+2. Check application behavior
+**Expected Result**: Empty state displayed appropriately
+
+---
+
+## 13. CONFIGURATION TESTS
+
+### 13.1 Backend Configuration
+**Test Case ID**: CONFIG-001
+**Test Name**: Backend URL Configuration
+**Description**: Test backend URL configuration
+**Steps**:
+1. Check backend.js configuration
+2. Verify API calls use correct URL
+3. Test with different backend URLs
+**Expected Result**: API calls use configured backend URL
+
+**Test Case ID**: CONFIG-002
+**Test Name**: Environment Configuration
+**Description**: Test environment-specific configuration
+**Steps**:
+1. Test in development mode
+2. Test in production mode
+3. Check configuration differences
+**Expected Result**: Configuration changes based on environment
+
+---
+
+## 14. MAINTENANCE TESTS
+
+### 14.1 Data Cleanup Tests
+**Test Case ID**: MAINT-001
+**Test Name**: Local Storage Cleanup
+**Description**: Test local storage cleanup on logout
+**Steps**:
+1. Login and perform various operations
+2. Logout
+3. Check local storage
+**Expected Result**: All user data cleared from local storage
+
+**Test Case ID**: MAINT-002
+**Test Name**: Memory Leak Prevention
+**Description**: Test for memory leaks
+**Steps**:
+1. Use application for extended period
+2. Monitor memory usage
+3. Check for memory leaks
+**Expected Result**: No significant memory leaks detected
+
+---
+
+## 15. REPORTING TESTS
+
+### 15.1 Report Generation Tests
+**Test Case ID**: REPORT-001
+**Test Name**: Asset Report Generation
+**Description**: Test asset report generation
+**Steps**:
+1. Navigate to reports section
+2. Generate asset report
+3. Check report content
+**Expected Result**: Report generated with correct data
+
+**Test Case ID**: REPORT-002
+**Test Name**: PDF Export
+**Description**: Test PDF export functionality
+**Steps**:
+1. Generate report
+2. Export to PDF
+3. Check PDF content
+**Expected Result**: PDF exported successfully with correct data
+
+---
+
+## Test Execution Guidelines
+
+### Pre-Test Setup
+1. Ensure backend server is running on http://192.168.0.190:8000
+2. Clear browser cache and localStorage
+3. Use Chrome 115+ browser for primary testing
+4. Have test data ready (organization ID: 962834)
+
+### Test Data Requirements
+- Valid user credentials for authentication
+- Sample asset data for CRUD operations
+- Multiple financial years for testing
+- Various asset types, manufacturers, and vendors
+
+### Test Environment
+- **Frontend**: Vite development server (http://localhost:5173)
+- **Backend**: Django REST API (http://192.168.0.190:8000/api)
+- **Database**: PostgreSQL (backend managed)
+- **Browser**: Chrome 115+ (primary), Firefox, Safari, Edge
+
+### Test Execution Order
+1. Authentication tests first
+2. Basic functionality tests
+3. Integration tests
+4. Performance tests
+5. Security tests
+6. Browser compatibility tests
+
+### Defect Reporting
+For each failed test case, report:
+- Test Case ID
+- Steps to reproduce
+- Expected vs actual result
+- Screenshots (if applicable)
+- Browser and version
+- Console errors (if any)
+
+### Test Completion Criteria
+- All critical test cases (AUTH, ROUTE, ASSET) must pass
+- 95% of functional test cases must pass
+- No critical security vulnerabilities
+- Performance within acceptable limits
+- Cross-browser compatibility verified
+
+---
+
+## Notes
+- This test suite covers the frontend React application only
+- Backend API testing should be done separately
+- Some tests may require backend modifications for proper testing
+- Regular regression testing recommended after each release
+- Test data should be reset between test runs for consistency

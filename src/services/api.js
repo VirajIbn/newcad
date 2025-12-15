@@ -1,0 +1,1761 @@
+import axios from 'axios';
+import { toast } from 'react-toastify';
+import { getBackendUrl, getBaseBackendUrl, CURRENT_CONFIG } from '../config/backend';
+
+// ========================================
+// API INSTANCE CREATION
+// ========================================
+// Create single axios instance for all API calls
+const api = axios.create({
+  baseURL: getBackendUrl(),
+  timeout: CURRENT_CONFIG.TIMEOUT,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Request interceptor for all API calls
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('access_token'); // Changed to match backend developer's token key
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    } else {
+    }
+    
+    // Debug logging if enabled
+    if (CURRENT_CONFIG.DEBUG) {
+    }
+    
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Response interceptor for all API calls
+api.interceptors.response.use(
+  (response) => {
+    // Debug logging if enabled
+    if (CURRENT_CONFIG.DEBUG) {
+
+    }
+    return response;
+  },
+  (error) => {
+    if (error.response) {
+      const { status, data } = error.response;
+      
+      // Debug logging if enabled
+      if (CURRENT_CONFIG.DEBUG) {
+        console.error(`❌ API Error: ${status} ${error.config?.url}`, data);
+      }
+      
+      // Don't show error toasts on login page
+      const isLoginPage = window.location.pathname === '/login';
+      
+      switch (status) {
+        case 401:
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('refresh_token');
+          localStorage.removeItem('token_expiry');
+          localStorage.removeItem('user');
+          if (!isLoginPage) {
+            window.location.href = '/login';
+            toast.error('Session expired. Please login again.');
+          }
+          break;
+        case 403:
+          if (!isLoginPage) {
+            toast.error('You do not have permission to perform this action.');
+          }
+          break;
+        case 404:
+          if (!isLoginPage) {
+            toast.error('Resource not found.');
+          }
+          break;
+        case 500:
+          if (!isLoginPage) {
+            toast.error('Server error. Please try again later.');
+          }
+          break;
+        default:
+          if (!isLoginPage) {
+            toast.error(data?.error || data?.message || 'An error occurred.');
+          }
+      }
+    } else if (error.request) {
+      // Don't show network error toasts on login page
+      const isLoginPage = window.location.pathname === '/login';
+      if (!isLoginPage) {
+        toast.error('Network error. Please check your connection.');
+      }
+    } else {
+      // Don't show generic error toasts on login page
+      const isLoginPage = window.location.pathname === '/login';
+      if (!isLoginPage) {
+        toast.error('An unexpected error occurred.');
+      }
+    }
+    
+    return Promise.reject(error);
+  }
+);
+
+// ========================================
+// API ENDPOINTS (Matching Backend Developer's Structure)
+// ========================================
+// Authentication API endpoints (fully mocked for frontend‑only usage)
+export const authenticationAPI = {
+  // Mock login – accepts any credentials and returns a fake token + user
+  login: async (credentials) => {
+    const now = Date.now();
+    const tokens = {
+      access: `mock-access-token-${now}`,
+      refresh: `mock-refresh-token-${now}`,
+    };
+
+    const user = {
+      id: '1',
+      name: credentials.email?.split('@')[0] || 'demo.user',
+      username: credentials.email || 'demo@cadashboard.local',
+      first_name: 'Demo',
+      last_name: 'User',
+      email: credentials.email || 'demo@cadashboard.local',
+      role: 'ADMIN',
+      orgId: 962834,
+    };
+
+    return {
+      data: {
+        tokens,
+        user,
+      },
+    };
+  },
+
+  // Mock token test – always succeeds
+  testToken: async () => {
+    return { data: { valid: true } };
+  },
+
+  // Mock logout – no-op
+  logout: async () => {
+    return { data: { success: true } };
+  },
+
+  // Mock refresh – returns a new access token
+  refresh: async () => {
+    const newAccess = `mock-access-token-${Date.now()}`;
+    return { data: { access: newAccess } };
+  },
+
+  // Mock profile – returns a basic profile derived from stored user
+  profile: async () => {
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      return { data: JSON.parse(userStr) };
+    }
+    return {
+      data: {
+        id: '1',
+        username: 'demo.user',
+        first_name: 'Demo',
+        last_name: 'User',
+        email: 'demo@cadashboard.local',
+        role: 'ADMIN',
+        orgId: 962834,
+      },
+    };
+  },
+};
+
+// (Asset, maintenance, request, and dashboard APIs were removed because they
+// are not used in the current frontend. If you reintroduce those features,
+// re-add the corresponding API clients here.)
+
+// Get JWT token from localStorage (matching backend developer's key)
+const getAuthToken = () => {
+  return localStorage.getItem('access_token');
+};
+
+// ========================================
+// MANUFACTURER API (using /assets/api/manufacturers/ with JWT authentication)
+// ========================================
+// API request helper for manufacturers
+const apiRequest = async (endpoint, options = {}) => {
+  const token = getAuthToken();
+  
+  
+  if (token) {
+    
+  }
+  
+  const defaultHeaders = {
+    'Content-Type': 'application/json',
+  };
+  
+  // Always add Authorization header for manufacturer endpoints (they require JWT)
+  if (token) {
+    defaultHeaders['Authorization'] = `Bearer ${token}`;
+  }
+
+  const config = {
+    ...options,
+    headers: {
+      ...defaultHeaders,
+      ...options.headers,
+    },
+  };
+
+  try {
+    // Use the correct base URL for asset endpoints
+    const baseUrl = `${getBackendUrl()}/assets`;
+    // const baseUrl = 'http://13.233.21.121:8000/api/assets'; // Previous IP
+   // const baseUrl = 'http://172.16.16.161:8000/api/assets'; // Previous IP
+    const fullUrl = `${baseUrl}${endpoint}`;
+
+    
+    const response = await fetch(fullUrl, config);
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || errorData.detail || `HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    // Handle 204 No Content (DELETE requests)
+    if (response.status === 204) {
+      return { success: true };
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API Request Error:', error);
+    throw error;
+  }
+};
+
+// Manufacturer API Service
+export const manufacturerAPI = {
+  // Get all manufacturers with pagination and filtering
+  getAll: async (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    const endpoint = `/manufacturers/${queryString ? `?${queryString}` : ''}`;
+    return apiRequest(endpoint);
+  },
+
+  // Get public manufacturers (no authentication required)
+  getPublic: async (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    const endpoint = `/manufacturers/public_manufacturers/${queryString ? `?${queryString}` : ''}`;
+    return apiRequest(endpoint);
+  },
+
+  // Get active manufacturers only
+  getActive: async (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    const endpoint = `/manufacturers/active_manufacturers/${queryString ? `?${queryString}` : ''}`;
+    return apiRequest(endpoint);
+  },
+
+  // Get single manufacturer by ID
+  getById: async (id) => {
+    return apiRequest(`/manufacturers/${id}/`);
+  },
+
+  // Check for duplicate manufacturer based on name
+  checkDuplicate: async (manufacturerName, orgId) => {
+    try {
+      // Use existing getAll endpoint with filters to check for duplicates
+      const params = {
+        manufacturername: manufacturerName,
+        orgid: orgId,
+        page_size: 1 // We only need to know if any exist
+      };
+      
+      const queryString = new URLSearchParams(params).toString();
+      const endpoint = `/manufacturers/${queryString ? `?${queryString}` : ''}`;
+      
+      const response = await apiRequest(endpoint);
+      
+      // Check if any manufacturers were found
+      const hasDuplicates = response && (
+        (response.results && response.results.length > 0) ||
+        (Array.isArray(response) && response.length > 0)
+      );
+      
+      // Get the first duplicate manufacturer details
+      let duplicateManufacturer = null;
+      if (hasDuplicates) {
+        duplicateManufacturer = response.results?.[0] || response[0];
+      }
+      
+      return {
+        exists: hasDuplicates,
+        count: hasDuplicates ? (response.results?.length || response.length || 0) : 0,
+        duplicateManufacturer: duplicateManufacturer
+      };
+    } catch (error) {
+      console.error('❌ manufacturerAPI: Check duplicate error:', error);
+      // If there's an error checking for duplicates, assume no duplicate exists
+      // This allows the creation to proceed and the backend will handle any actual duplicates
+      return {
+        exists: false,
+        count: 0,
+        duplicateManufacturer: null
+      };
+    }
+  },
+
+  // Create new manufacturer
+  create: async (data) => {
+
+    
+    // Ensure we have the required fields with proper structure (matching Postman API)
+    const manufacturerData = {
+      manufacturername: data.manufacturername,
+      description: data.description || '',
+      orgid: data.orgid,
+      addedby: data.addedby,
+      modifiedby: data.modifiedby,
+    };
+    
+    
+    
+    try {
+      const response = await apiRequest('/manufacturers/', {
+        method: 'POST',
+        body: JSON.stringify(manufacturerData),
+      });
+
+      return response;
+    } catch (error) {
+      console.error('Create manufacturer error:', error);
+      throw error;
+    }
+  },
+
+  // Update manufacturer completely
+  update: async (id, data) => {
+    // Ensure we have the required fields with proper structure (matching Postman API)
+    const manufacturerData = {
+      manufacturername: data.manufacturername,
+      description: data.description || '',
+      orgid: data.orgid,
+      addedby: data.addedby,
+      modifiedby: data.modifiedby,
+    };
+    
+
+    
+    return apiRequest(`/manufacturers/${id}/`, {
+      method: 'PUT',
+      body: JSON.stringify(manufacturerData),
+    });
+  },
+
+  // Partial update manufacturer
+  partialUpdate: async (id, data) => {
+    return apiRequest(`/manufacturers/${id}/`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  },
+
+  // Delete manufacturer (soft delete)
+  delete: async (id, modifiedby = null) => {
+    const deleteData = {};
+    if (modifiedby) {
+      deleteData.modifiedby = modifiedby;
+    }
+    return apiRequest(`/manufacturers/${id}/`, {
+      method: 'DELETE',
+      body: Object.keys(deleteData).length > 0 ? JSON.stringify(deleteData) : undefined,
+    });
+  },
+
+  // Search manufacturers
+  search: async (searchTerm, params = {}) => {
+    const searchParams = { 
+      ...params, 
+      search: searchTerm,
+      q: searchTerm,
+      query: searchTerm,
+      keyword: searchTerm,
+      // Add specific field searches for comprehensive search
+      manufacturername: searchTerm,
+      description: searchTerm
+    };
+    const queryString = new URLSearchParams(searchParams).toString();
+    const endpoint = `/manufacturers/?${queryString}`;
+    return apiRequest(endpoint);
+  },
+};
+
+// ========================================
+// ASSET TYPES API (using /assets/api/asset-types/ with JWT authentication)
+// ========================================
+// Asset Types API Service
+export const assetTypesAPI = {
+  // Get all asset types with pagination and filtering
+  getAll: async (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    const endpoint = `/asset-types/${queryString ? `?${queryString}` : ''}`;
+    return apiRequest(endpoint);
+  },
+
+  // Get active asset types only
+  getActive: async (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    const endpoint = `/asset-types/active_types/${queryString ? `?${queryString}` : ''}`;
+    return apiRequest(endpoint);
+  },
+
+  // Get single asset type by ID
+  getById: async (id) => {
+    return apiRequest(`/asset-types/${id}/`);
+  },
+
+  // Check for duplicate asset type based on name or prefix
+  checkDuplicate: async (assetTypeName, assetTypePrefix, orgId) => {
+    try {
+      // Use existing getAll endpoint with filters to check for duplicates
+      const params = {
+        orgid: orgId,
+        page_size: 100 // Get more results to check both name and prefix
+      };
+      
+      const queryString = new URLSearchParams(params).toString();
+      const endpoint = `/asset-types/${queryString ? `?${queryString}` : ''}`;
+      
+      const response = await apiRequest(endpoint);
+      
+      // Check if any asset types were found
+      const hasResults = response && (
+        (response.results && response.results.length > 0) ||
+        (Array.isArray(response) && response.length > 0)
+      );
+      
+      if (!hasResults) {
+        return {
+          exists: false,
+          count: 0,
+          duplicateAssetType: null,
+          duplicateType: null
+        };
+      }
+      
+      const assetTypes = response.results || response;
+      
+      // Check for duplicate name
+      const nameDuplicate = assetTypes.find(assetType => 
+        assetType.assettypename && 
+        assetType.assettypename.toLowerCase() === assetTypeName.toLowerCase()
+      );
+      
+      // Check for duplicate prefix
+      const prefixDuplicate = assetTypes.find(assetType => 
+        assetType.assettypeprefix && 
+        assetType.assettypeprefix.toLowerCase() === assetTypePrefix.toLowerCase()
+      );
+      
+      if (nameDuplicate) {
+        return {
+          exists: true,
+          count: 1,
+          duplicateAssetType: nameDuplicate,
+          duplicateType: 'name'
+        };
+      }
+      
+      if (prefixDuplicate) {
+        return {
+          exists: true,
+          count: 1,
+          duplicateAssetType: prefixDuplicate,
+          duplicateType: 'prefix'
+        };
+      }
+      
+      return {
+        exists: false,
+        count: 0,
+        duplicateAssetType: null,
+        duplicateType: null
+      };
+    } catch (error) {
+      console.error('❌ assetTypesAPI: Check duplicate error:', error);
+      // If there's an error checking for duplicates, assume no duplicate exists
+      // This allows the creation to proceed and the backend will handle any actual duplicates
+      return {
+        exists: false,
+        count: 0,
+        duplicateAssetType: null,
+        duplicateType: null
+      };
+    }
+  },
+
+  // Create new asset type
+  create: async (data) => {
+    // Ensure we have the required fields with proper structure
+    const assetTypeData = {
+      assettypename: data.assettypename,
+      assettypeprefix: data.assettypeprefix || '',
+      assetcategoryid: data.assetcategoryid, // Required field
+      assetdepreciationrate: data.assetdepreciationrate || '',
+      description: data.description || '',
+      
+      orgid: data.orgid,
+      addedby: data.addedby,
+      modifiedby: data.modifiedby,
+    };
+    
+    try {
+      const response = await apiRequest('/asset-types/', {
+        method: 'POST',
+        body: JSON.stringify(assetTypeData),
+      });
+
+      return response;
+    } catch (error) {
+      console.error('Create asset type error:', error);
+      throw error;
+    }
+  },
+
+  // Update asset type completely
+  update: async (id, data) => {
+    // Ensure we have the required fields with proper structure
+    const assetTypeData = {
+      assettypename: data.assettypename,
+      assettypeprefix: data.assettypeprefix || '',
+      assetcategoryid: data.assetcategoryid, // Required field
+      assetdepreciationrate: data.assetdepreciationrate || '',
+      description: data.description || '',
+      orgid: data.orgid,
+      addedby: data.addedby,
+      modifiedby: data.modifiedby,
+    };
+    
+    return apiRequest(`/asset-types/${id}/`, {
+      method: 'PUT',
+      body: JSON.stringify(assetTypeData),
+    });
+  },
+
+  // Partial update asset type
+  partialUpdate: async (id, data) => {
+    return apiRequest(`/asset-types/${id}/`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  },
+
+  // Delete asset type (soft delete)
+  delete: async (id, data = {}) => {
+    return apiRequest(`/asset-types/${id}/`, {
+      method: 'DELETE',
+      body: JSON.stringify(data),
+    });
+  },
+
+  // Search asset types
+  search: async (searchTerm, params = {}) => {
+    const searchParams = { 
+      ...params, 
+      search: searchTerm,
+      q: searchTerm,
+      query: searchTerm,
+      keyword: searchTerm,
+      // Add specific field searches for comprehensive search
+      assettypename: searchTerm,
+      description: searchTerm,
+      assettypeprefix: searchTerm,
+      assetdepreciationrate: searchTerm
+    };
+    const queryString = new URLSearchParams(searchParams).toString();
+    const endpoint = `/asset-types/?${queryString}`;
+    return apiRequest(endpoint);
+  },
+};
+
+// ========================================
+// ASSET CATEGORIES API (using /assets/api/asset-categories/ with JWT authentication)
+// ========================================
+// Asset Categories API Service
+export const assetCategoriesAPI = {
+  // Get all asset categories with pagination and filtering
+  getAll: async (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    const endpoint = `/asset-categories/${queryString ? `?${queryString}` : ''}`;
+    return apiRequest(endpoint);
+  },
+
+  // Get active asset categories only
+  getActive: async (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    const endpoint = `/asset-categories/active_categories/${queryString ? `?${queryString}` : ''}`;
+    return apiRequest(endpoint);
+  },
+
+  // Get single asset category by ID
+  getById: async (id) => {
+    return apiRequest(`/asset-categories/${id}/`);
+  },
+
+  // Check for duplicate asset category based on name
+  checkDuplicate: async (categoryName) => {
+    try {
+      // Use existing getAll endpoint with filters to check for duplicates
+      const params = {
+        categoryname: categoryName,
+        page_size: 1 // We only need to know if any exist
+      };
+      
+      const queryString = new URLSearchParams(params).toString();
+      const endpoint = `/asset-categories/${queryString ? `?${queryString}` : ''}`;
+      
+      const response = await apiRequest(endpoint);
+      
+      // Check if any asset categories were found
+      const hasDuplicates = response && (
+        (response.results && response.results.length > 0) ||
+        (Array.isArray(response) && response.length > 0)
+      );
+      
+      // Get the first duplicate asset category details
+      let duplicateCategory = null;
+      if (hasDuplicates) {
+        duplicateCategory = response.results?.[0] || response[0];
+      }
+      
+      return {
+        exists: hasDuplicates,
+        count: hasDuplicates ? (response.results?.length || response.length || 0) : 0,
+        duplicateCategory: duplicateCategory
+      };
+    } catch (error) {
+      console.error('❌ assetCategoriesAPI: Check duplicate error:', error);
+      // If there's an error checking for duplicates, assume no duplicate exists
+      // This allows the creation to proceed and the backend will handle any actual duplicates
+      return {
+        exists: false,
+        count: 0,
+        duplicateCategory: null
+      };
+    }
+  },
+
+  // Create new asset category
+  create: async (data) => {
+    // Get current user ID from localStorage
+    const userData = localStorage.getItem('user');
+    let userId = null;
+    if (userData) {
+      try {
+        const user = JSON.parse(userData);
+        userId = user.id;
+      } catch (e) {
+        console.error('Error parsing user data:', e);
+      }
+    }
+
+    // Ensure we have the required fields with proper structure
+    const assetCategoryData = {
+      categoryname: data.categoryname,
+      description: data.description || '',
+      isactive: data.isactive !== undefined ? data.isactive : 1,
+      isdeleted: 0, // Always 0 for new records
+      modifiedby: userId, // Set to logged-in user ID
+    };
+    
+    try {
+      const response = await apiRequest('/asset-categories/', {
+        method: 'POST',
+        body: JSON.stringify(assetCategoryData),
+      });
+
+      return response;
+    } catch (error) {
+      console.error('Create asset category error:', error);
+      throw error;
+    }
+  },
+
+  // Update asset category (use PATCH for partial updates)
+  update: async (id, data) => {
+    // Get current user ID from localStorage
+    const userData = localStorage.getItem('user');
+    let userId = null;
+    if (userData) {
+      try {
+        const user = JSON.parse(userData);
+        userId = user.id;
+      } catch (e) {
+        console.error('Error parsing user data:', e);
+      }
+    }
+
+    // Ensure we have the required fields with proper structure
+    const assetCategoryData = {
+      categoryname: data.categoryname,
+      description: data.description || '',
+      isactive: data.isactive !== undefined ? data.isactive : 1,
+      isdeleted: 0, // Keep as 0 for updates (use delete endpoint for soft delete)
+      modifiedby: userId, // Set to logged-in user ID
+    };
+    
+    return apiRequest(`/asset-categories/${id}/`, {
+      method: 'PATCH',
+      body: JSON.stringify(assetCategoryData),
+    });
+  },
+
+  // Delete asset category (soft delete)
+  delete: async (id) => {
+    // Get current user ID from localStorage for audit trail
+    const userData = localStorage.getItem('user');
+    let userId = null;
+    if (userData) {
+      try {
+        const user = JSON.parse(userData);
+        userId = user.id;
+      } catch (e) {
+        console.error('Error parsing user data:', e);
+      }
+    }
+
+    const deleteData = {};
+    if (userId) {
+      deleteData.modifiedby = userId;
+    }
+    
+    return apiRequest(`/asset-categories/${id}/`, {
+      method: 'DELETE',
+      body: Object.keys(deleteData).length > 0 ? JSON.stringify(deleteData) : undefined,
+    });
+  },
+
+  // Search asset categories
+  search: async (searchTerm, params = {}) => {
+    const searchParams = { 
+      ...params, 
+      search: searchTerm,
+    };
+    const queryString = new URLSearchParams(searchParams).toString();
+    const endpoint = `/asset-categories/?${queryString}`;
+    return apiRequest(endpoint);
+  },
+};
+
+// ========================================
+// VENDOR API (using /assets/api/asset-vendors/ with JWT authentication)
+// ========================================
+// Vendor API Service
+export const vendorAPI = {
+  // Get all vendors with pagination and filtering
+  getAll: async (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    const endpoint = `/asset-vendors/${queryString ? `?${queryString}` : ''}`;
+    
+    
+    return apiRequest(endpoint);
+  },
+
+  // Get active vendors only
+  getActive: async (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    const endpoint = `/asset-vendors/active/${queryString ? `?${queryString}` : ''}`;
+    return apiRequest(endpoint);
+  },
+
+  // Get single vendor by ID
+  getById: async (id) => {
+    return apiRequest(`/asset-vendors/${id}/`);
+  },
+
+  // Check for duplicate vendor based on name
+  checkDuplicate: async (vendorName, orgId) => {
+    try {
+      // Use existing getAll endpoint with filters to check for duplicates
+      const params = {
+        vendorname: vendorName,
+        orgid: orgId,
+        page_size: 1 // We only need to know if any exist
+      };
+      
+      const queryString = new URLSearchParams(params).toString();
+      const endpoint = `/asset-vendors/${queryString ? `?${queryString}` : ''}`;
+      
+      const response = await apiRequest(endpoint);
+      
+      // Check if any vendors were found
+      const hasDuplicates = response && (
+        (response.results && response.results.length > 0) ||
+        (Array.isArray(response) && response.length > 0)
+      );
+      
+      // Get the first duplicate vendor details
+      let duplicateVendor = null;
+      if (hasDuplicates) {
+        duplicateVendor = response.results?.[0] || response[0];
+      }
+      
+      return {
+        exists: hasDuplicates,
+        count: hasDuplicates ? (response.results?.length || response.length || 0) : 0,
+        duplicateVendor: duplicateVendor
+      };
+    } catch (error) {
+      console.error('❌ vendorAPI: Check duplicate error:', error);
+      // If there's an error checking for duplicates, assume no duplicate exists
+      // This allows the creation to proceed and the backend will handle any actual duplicates
+      return {
+        exists: false,
+        count: 0,
+        duplicateVendor: null
+      };
+    }
+  },
+
+  // Create new vendor
+  create: async (data) => {
+    
+    // Ensure we have the required fields with proper structure
+    const vendorData = {
+      vendorname: data.vendorname,
+      gstno: data.gstno || '',
+      contactperson: data.contactperson || '',
+      email: data.email || '',
+      mobilenumber: data.mobilenumber || '',
+      address: data.address || '',
+      countryid: data.countryid || null,
+      stateid: data.stateid || null,
+      cityid: data.cityid || null,
+      zip: data.zip || '',
+      description: data.description || '',
+      orgid: data.orgid,
+      addedby: data.addedby,
+      modifiedby: data.modifiedby, // Set modifiedby same as addedby for new vendors
+    };
+
+
+    try {
+      const response = await apiRequest('/asset-vendors/', {
+        method: 'POST',
+        body: JSON.stringify(vendorData),
+      });
+
+      return response;
+    } catch (error) {
+      console.error('❌ vendorAPI: Create vendor error:', error);
+      throw error;
+    }
+  },
+
+  // Update vendor completely
+  update: async (id, data) => {
+    // Ensure we have the required fields with proper structure
+    const vendorData = {
+      vendorname: data.vendorname,
+      gstno: data.gstno || '',
+      contactperson: data.contactperson || '',
+      email: data.email || '',
+      mobilenumber: data.mobilenumber || '',
+      address: data.address || '',
+      countryid: data.countryid || null,
+      stateid: data.stateid || null,
+      cityid: data.cityid || null,
+      zip: data.zip || '',
+      description: data.description || '',
+      orgid: data.orgid,
+      modifiedby: data.modifiedby, // Include modifiedby for updates
+    };
+
+    return apiRequest(`/asset-vendors/${id}/`, {
+      method: 'PUT',
+      body: JSON.stringify(vendorData),
+    });
+  },
+
+  // Partial update vendor
+  partialUpdate: async (id, data) => {
+    return apiRequest(`/asset-vendors/${id}/`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  },
+
+  // Delete vendor (soft delete)
+  delete: async (id, modifiedBy) => {
+    return apiRequest(`/asset-vendors/${id}/`, {
+      method: 'DELETE',
+      body: JSON.stringify({ modifiedby: modifiedBy }),
+    });
+  },
+
+  // Search vendors
+  search: async (searchTerm, params = {}) => {
+    // Try different search parameter names that the backend might expect
+    const searchParams = { 
+      ...params, 
+      search: searchTerm,
+      q: searchTerm,           // Alternative search parameter
+      query: searchTerm,       // Another alternative
+      keyword: searchTerm,     // Yet another alternative
+      // Add specific field searches for comprehensive search
+      vendorname: searchTerm,
+      contactperson: searchTerm,
+      gstno: searchTerm,
+      email: searchTerm,
+      mobilenumber: searchTerm,
+      address: searchTerm,
+      cityname: searchTerm,
+      statename: searchTerm,
+      zip: searchTerm
+    };
+    const queryString = new URLSearchParams(searchParams).toString();
+    const endpoint = `/asset-vendors/?${queryString}`;
+    return apiRequest(endpoint);
+  },
+};
+
+// ========================================
+// COUNTRIES API ENDPOINTS
+// ========================================
+export const countriesAPI = {
+  // Get all active countries for dropdown (recommended endpoint)
+  getActiveCountries: async () => {
+    try {
+      const response = await api.get('/master/countries/active_countries/');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching active countries:', error);
+      throw error;
+    }
+  },
+
+  // Get all countries
+  getAll: async (params = {}) => {
+    try {
+      const response = await api.get('/master/countries/', { params });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching countries:', error);
+      throw error;
+    }
+  },
+
+  // Search countries by name or code
+  searchCountries: async (searchTerm) => {
+    try {
+      const response = await api.get('/master/countries/', {
+        params: { search: searchTerm }
+      });
+      return response.data.results || response.data;
+    } catch (error) {
+      console.error('Error searching countries:', error);
+      throw error;
+    }
+  },
+
+  // Get country by ID
+  getById: async (countryId) => {
+    try {
+      const response = await api.get(`/master/countries/${countryId}/`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching country by ID:', error);
+      throw error;
+    }
+  },
+
+  // Filter countries with custom parameters
+  filter: async (filters = {}) => {
+    try {
+      const response = await api.get('/master/countries/', { params: filters });
+      return response.data;
+    } catch (error) {
+      console.error('Error filtering countries:', error);
+      throw error;
+    }
+  },
+};
+
+// ========================================
+// STATES API ENDPOINTS
+// ========================================
+export const statesAPI = {
+  // Get all active states
+  getActiveStates: async () => {
+    try {
+      const response = await api.get('/master/states/active_states/');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching active states:', error);
+      throw error;
+    }
+  },
+
+  // Get states by country (for cascading dropdown)
+  getStatesByCountry: async (countryId) => {
+    try {
+      const response = await api.get('/master/states/states_by_country/', {
+        params: { country_id: countryId }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching states by country:', error);
+      throw error;
+    }
+  },
+
+  // Debug states (for development/testing)
+  getDebugStates: async () => {
+    try {
+      const response = await api.get('/master/states/debug_states/');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching debug states:', error);
+      throw error;
+    }
+  },
+
+  // Get state by ID
+  getById: async (stateId) => {
+    try {
+      const response = await api.get(`/master/states/${stateId}/`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching state by ID:', error);
+      throw error;
+    }
+  },
+};
+
+// ========================================
+// CITIES API ENDPOINTS
+// ========================================
+export const citiesAPI = {
+  // Get all active cities
+  getActiveCities: async () => {
+    try {
+      const response = await api.get('/master/cities/active_cities/');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching active cities:', error);
+      throw error;
+    }
+  },
+
+  // Get cities by state (for cascading dropdown)
+  getCitiesByState: async (stateId) => {
+    try {
+      const response = await api.get('/master/cities/cities_by_state/', {
+        params: { state_id: stateId }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching cities by state:', error);
+      throw error;
+    }
+  },
+
+  // Get city by ID
+  getById: async (cityId) => {
+    try {
+      const response = await api.get(`/master/cities/${cityId}/`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching city by ID:', error);
+      throw error;
+    }
+  },
+};
+
+// ========================================
+// ASSET LOGS API ENDPOINTS
+// ========================================
+// In‑memory mock asset logs to avoid backend calls
+// Structured to match the UI layout shown in the provided screenshot:
+// Sr No | Description                                            | Added By | Added Date
+// 1     | Asset IBN/KB/2 created by Leo Sharma on 16-Sep-25      | Mahesh   | 16-Sep-25 06:42 PM
+// 2     | Asset IBN/KB/2 stored to location IT Operation on ...  | Mahesh   | 16-Sep-25 06:42 PM
+// Base example used to derive text for every record
+const CREATED_BY_NAMES = ['Leo Sharma', 'Anita Rao', 'Rahul Mehta', 'Sneha Patil'];
+const ADDED_BY_NAMES = ['Mahesh', 'Admin', 'System'];
+const LOCATIONS = ['IT Operation', 'Head Office Store', 'Warehouse A', 'Branch B Store'];
+
+// Generate logs for any asset ID following the provided sentence structure:
+// "Asset IBN/KB/{n} created by {Name} on {DD-MMM-YY}"
+// "Asset IBN/KB/{n} stored to location {Location} on {DD-MMM-YY}"
+const generateAssetLogs = (assetId, assetNumber) => {
+  const idNumber = Number(assetId) || 0;
+  const now = new Date();
+
+  // Deterministic but varied dates: created yesterday, stored today
+  const createdDate = new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000);
+  const storedDate = new Date(now.getTime());
+
+  const pad = (n) => (n < 10 ? `0${n}` : `${n}`);
+  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const formatDisplayDate = (d) => {
+    const day = pad(d.getDate());
+    const mon = MONTHS[d.getMonth()];
+    const yr = d.getFullYear().toString().slice(-2);
+    return `${day}-${mon}-${yr}`;
+  };
+
+  const assetCode = assetNumber || `Asset-${idNumber}`;
+  // Creator name (first + last) used in description
+  const createdBy = CREATED_BY_NAMES[idNumber % CREATED_BY_NAMES.length];
+  // "Added By" column should show the same person who created the asset
+  const addedBy = createdBy;
+  const location = LOCATIONS[idNumber % LOCATIONS.length];
+  const createdOnText = formatDisplayDate(createdDate);
+  const storedOnText = formatDisplayDate(storedDate);
+
+  return [
+    {
+      assetlogid: idNumber * 10 + 1,
+      description: `Asset ${assetCode} created by ${createdBy} on ${createdOnText}`,
+      addedby_username: addedBy,
+      addeddate: createdDate.toISOString(),
+    },
+    {
+      assetlogid: idNumber * 10 + 2,
+      description: `Asset ${assetCode} stored to location ${location} on ${storedOnText}`,
+      addedby_username: addedBy,
+      addeddate: storedDate.toISOString(),
+    },
+  ];
+};
+
+export const assetLogsAPI = {
+  // Get asset logs by asset ID (mocked)
+  getByAssetId: async (assetId, assetNumber) => {
+    if (!assetId || assetId === 0 || assetId === '0') {
+      throw new Error('Asset ID is required and must be a valid number');
+    }
+    const logs = generateAssetLogs(assetId, assetNumber);
+
+    return {
+      count: logs.length,
+      results: logs,
+    };
+  },
+};
+
+// ========================================
+// ASSET DETAILS API ENDPOINTS
+// ========================================
+export const assetDetailsAPI = {
+  // Get all asset details with pagination and filtering
+  getAll: async (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    const endpoint = `/asset-details/${queryString ? `?${queryString}` : ''}`;
+    
+    
+    return apiRequest(endpoint);
+  },
+
+  // Get active assets only
+  getActive: async (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    const endpoint = `/asset-details/active_assets/${queryString ? `?${queryString}` : ''}`;
+    return apiRequest(endpoint);
+  },
+
+  // Get high value assets
+  getHighValue: async (threshold = 10000, params = {}) => {
+    const searchParams = { ...params, threshold };
+    const queryString = new URLSearchParams(searchParams).toString();
+    const endpoint = `/asset-details/high_value_assets/${queryString ? `?${queryString}` : ''}`;
+    return apiRequest(endpoint);
+  },
+
+  // Get asset detail by ID
+  getById: async (id) => {
+    try {
+      const response = await apiRequest(`/asset-details/${id}/`);
+      return response;
+    } catch (error) {
+      console.error('Error fetching asset detail by ID:', error);
+      throw error;
+    }
+  },
+
+  // Check for duplicate asset based on model and serial number
+  checkDuplicate: async (model, serialNumber, orgId = 962834) => {
+    try {
+      
+      // Use existing getAll endpoint with filters to check for duplicates
+      const params = {
+        model: model,
+        serialnumber: serialNumber,
+        orgid: orgId,
+        page_size: 1 // We only need to know if any exist
+      };
+      
+      const queryString = new URLSearchParams(params).toString();
+      const endpoint = `/asset-details/${queryString ? `?${queryString}` : ''}`;
+      
+      const response = await apiRequest(endpoint);
+      
+      // Check if any assets were found
+      const hasDuplicates = response && (
+        (response.results && response.results.length > 0) ||
+        (Array.isArray(response) && response.length > 0)
+      );
+      
+      // Get the first duplicate asset details
+      let duplicateAsset = null;
+      if (hasDuplicates) {
+        duplicateAsset = response.results?.[0] || response[0];
+      }
+      
+      return {
+        exists: hasDuplicates,
+        count: hasDuplicates ? (response.results?.length || response.length || 0) : 0,
+        duplicateAsset: duplicateAsset
+      };
+    } catch (error) {
+      console.error('❌ assetDetailsAPI: Check duplicate error:', error);
+      // If there's an error checking for duplicates, assume no duplicate exists
+      // This allows the creation to proceed and the backend will handle any actual duplicates
+      return {
+        exists: false,
+        count: 0,
+        duplicateAsset: null
+      };
+    }
+  },
+
+  // Create new asset detail
+  create: async (data) => {
+    // Ensure we have the required fields with proper structure
+    const assetData = {
+      orgid: data.orgid,
+      assettypeid: data.assettypeid || null,
+      status: data.status !== undefined ? data.status : 1,
+      manufacturerid: data.manufacturerid || null,
+      vendorid: data.vendorid || null,
+      model: data.model || '',
+      serialnumber: data.serialnumber || '',
+      purchasedate: data.purchasedate || null,
+      purchasecost: data.purchasecost || '0.00',
+      branchid: data.branchid || null,
+      departmentid: data.departmentid || null,
+      depreciationrate: data.depreciationrate || '0.00',
+      currentvalue: data.currentvalue || '0.00',
+      acquisitiontype: data.acquisitiontype || '',
+      conditionid: data.conditionid || null,
+      warrantystartdate: data.warrantystartdate || null,
+      warrantyenddate: data.warrantyenddate || null,
+      insurancedetails: data.insurancedetails || '',
+      description: data.description || '',
+      employeeid: data.employeeid || null,
+      addedby: data.addedby,
+      modifiedby: data.modifiedby,
+      storedlocation: data.storedlocation || '',
+      financialyearid: data.financialyearid || new Date().getFullYear(),
+      assignedondate: data.assignedondate || null,
+    };
+
+    try {
+      const response = await apiRequest('/asset-details/', {
+        method: 'POST',
+        body: JSON.stringify(assetData),
+      });
+      return response;
+    } catch (error) {
+      console.error('❌ assetDetailsAPI: Create asset error:', error);
+      throw error;
+    }
+  },
+
+  // Update asset detail
+  update: async (id, data) => {
+    const assetData = {
+      orgid: data.orgid,
+      assettypeid: data.assettypeid || null,
+      status: data.status !== undefined ? data.status : 1,
+      manufacturerid: data.manufacturerid || null,
+      vendorid: data.vendorid || null,
+      model: data.model || '',
+      serialnumber: data.serialnumber || '',
+      purchasedate: data.purchasedate || null,
+      purchasecost: data.purchasecost || '0.00',
+      branchid: data.branchid || null,
+      departmentid: data.departmentid || null,
+      depreciationrate: data.depreciationrate || '0.00',
+      currentvalue: data.currentvalue || '0.00',
+      acquisitiontype: data.acquisitiontype || '',
+      conditionid: data.conditionid || null,
+      warrantystartdate: data.warrantystartdate || null,
+      warrantyenddate: data.warrantyenddate || null,
+      insurancedetails: data.insurancedetails || '',
+      description: data.description || '',
+      employeeid: data.employeeid || null,
+      addedby: data.addedby,
+      modifiedby: data.modifiedby,
+      storedlocation: data.storedlocation || '',
+      financialyearid: data.financialyearid || new Date().getFullYear(),
+      assignedondate: data.assignedondate || null,
+    };
+
+    return apiRequest(`/asset-details/${id}/`, {
+      method: 'PUT',
+      body: JSON.stringify(assetData),
+    });
+  },
+
+  // Partial update asset detail
+  patch: async (id, data) => {
+    return apiRequest(`/asset-details/${id}/`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  },
+
+  // Delete asset detail (soft delete)
+  delete: async (id, modifiedby = null) => {
+    // Validate ID before making API request
+    if (!id || id === 0 || id === '0') {
+      const errorMsg = 'Invalid asset ID. Cannot delete asset with ID: ' + id;
+      console.error('❌ assetDetailsAPI: delete - Invalid ID:', id);
+      throw new Error(errorMsg);
+    }
+    
+    const deleteData = {};
+    if (modifiedby) {
+      deleteData.modifiedby = modifiedby;
+    }
+    
+    return apiRequest(`/asset-details/${id}/`, {
+      method: 'DELETE',
+      body: Object.keys(deleteData).length > 0 ? JSON.stringify(deleteData) : undefined,
+    });
+  },
+
+  // Search asset details
+  search: async (searchTerm, params = {}) => {
+    const searchParams = { 
+      ...params, 
+      search: searchTerm,
+      q: searchTerm,           // Alternative search parameter
+      query: searchTerm,       // Another alternative
+      keyword: searchTerm,     // Yet another alternative
+      // Add specific field searches for comprehensive search
+      assetnumber: searchTerm,
+      model: searchTerm,
+      serialnumber: searchTerm,
+      assettype_name: searchTerm,
+      manufacturer_name: searchTerm,
+      vendor_name: searchTerm,
+      assigned_employee_name: searchTerm,
+      storedlocation: searchTerm
+    };
+    const queryString = new URLSearchParams(searchParams).toString();
+    const endpoint = `/asset-details/${queryString ? `?${queryString}` : ''}`;
+    return apiRequest(endpoint);
+  },
+};
+
+// ========================================
+// UTILITY FUNCTIONS
+// (Developer-only test helpers for API connectivity were removed because they
+// are not used by the running app. Reintroduce them if you need manual tests.)
+
+// DROPDOWN API ENDPOINTS (NEW STANDARDIZED SYSTEM)
+export const dropdownAPI = {
+  // Asset Dropdowns
+  getAssetStatus: async () => {
+    // Mocked
+    return [
+      { codeid: 481, codename: 'In Stock' },
+      { codeid: 482, codename: 'In Repair' },
+      { codeid: 483, codename: 'Retired' },
+      { codeid: 484, codename: 'Assigned' },
+      { codeid: 485, codename: 'Scrapped' },
+    ];
+  },
+
+  getAssetCondition: async () => {
+    // Mocked - codes aligned with AssetDetailsModal condition color mapping
+    return [
+      { codeid: 1, codename: 'Excellent' },
+      { codeid: 2, codename: 'Good' },
+      { codeid: 3, codename: 'Fair' },
+      { codeid: 4, codename: 'Poor' },
+      { codeid: 5, codename: 'Critical' },
+    ];
+  },
+
+  getBranches: async (orgId) => {
+    // Mocked
+    return [
+      { branchid: 1, branchname: 'Head Office', orgid: orgId },
+      { branchid: 2, branchname: 'Branch A', orgid: orgId },
+      { branchid: 3, branchname: 'Branch B', orgid: orgId },
+    ];
+  },
+
+  getDepartments: async (orgId) => {
+    // Mocked
+    return [
+      { departmentid: 11, departmentname: 'IT', orgid: orgId },
+      { departmentid: 12, departmentname: 'Finance', orgid: orgId },
+      { departmentid: 13, departmentname: 'HR', orgid: orgId },
+    ];
+  },
+
+  // Employee Dropdown (authentication required)
+  getActiveEmployees: async () => {
+    // Mocked
+    return [
+      { id: 201, name: 'Alice Smith', employeeid: 201 },
+      { id: 202, name: 'Bob Lee', employeeid: 202 },
+      { id: 203, name: 'Charlie Kim', employeeid: 203 },
+      { id: 204, name: 'Dana Fox', employeeid: 204 },
+    ];
+  },
+
+  // CRM Dropdowns
+  getCrmDealStatus: async () => {
+    try {
+      const response = await api.get('/master/codes/crm_deal_status_dropdown/');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching CRM deal status dropdown:', error);
+      throw error;
+    }
+  },
+
+  getCrmLeadStatus: async () => {
+    try {
+      const response = await api.get('/master/codes/crm_lead_status_dropdown/');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching CRM lead status dropdown:', error);
+      throw error;
+    }
+  },
+
+  getCrmLeadSource: async () => {
+    try {
+      const response = await api.get('/master/codes/crm_lead_source_dropdown/');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching CRM lead source dropdown:', error);
+      throw error;
+    }
+  },
+
+  // Organization Dropdowns
+  getClientType: async () => {
+    // Mocked
+    return [
+      { codeid: 901, codename: 'Enterprise' },
+      { codeid: 902, codename: 'SMB' },
+      { codeid: 903, codename: 'Government' },
+    ];
+  },
+
+  getPaymentStatus: async () => {
+    // Mocked
+    return [
+      { codeid: 921, codename: 'Paid' },
+      { codeid: 922, codename: 'Pending' },
+      { codeid: 923, codename: 'Overdue' },
+    ];
+  },
+
+  getIndustryType: async () => {
+    // Mocked
+    return [
+      { codeid: 911, codename: 'Technology' },
+      { codeid: 912, codename: 'Finance' },
+      { codeid: 913, codename: 'Manufacturing' },
+    ];
+  },
+
+  // Compliance & Task Dropdowns
+  getComplianceStatus: async () => {
+    // Mocked
+    return [
+      { codeid: 931, codename: 'Open' },
+      { codeid: 932, codename: 'In Progress' },
+      { codeid: 933, codename: 'Closed' },
+    ];
+  },
+
+  getComplianceType: async () => {
+    // Mocked
+    return [
+      { codeid: 941, codename: 'Policy' },
+      { codeid: 942, codename: 'Legal' },
+      { codeid: 943, codename: 'Safety' },
+    ];
+  },
+
+  getTaskStatus: async () => {
+    // Mocked
+    return [
+      { codeid: 951, codename: 'Open' },
+      { codeid: 952, codename: 'In Progress' },
+      { codeid: 953, codename: 'Done' },
+    ];
+  },
+
+  getTaskPriority: async () => {
+    // Mocked
+    return [
+      { codeid: 961, codename: 'Low' },
+      { codeid: 962, codename: 'Medium' },
+      { codeid: 963, codename: 'High' },
+    ];
+  },
+
+
+  // General Utility Dropdowns
+  getGender: async () => {
+    try {
+      const response = await api.get('/master/codes/gender_dropdown/');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching gender dropdown:', error);
+      throw error;
+    }
+  },
+
+  getPaymentMode: async () => {
+    try {
+      const response = await api.get('/master/codes/payment_mode_dropdown/');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching payment mode dropdown:', error);
+      throw error;
+    }
+  },
+
+  // Developer Tools
+  getCodesByGroup: async (codeGroup) => {
+    try {
+      const response = await api.get(`/master/codes/codes_by_group/?code_group=${codeGroup}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error fetching codes for group ${codeGroup}:`, error);
+      throw error;
+    }
+  },
+
+  getAllDropdownGroups: async () => {
+    try {
+      const response = await api.get('/master/codes/all_dropdown_groups/');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching all dropdown groups:', error);
+      throw error;
+    }
+  },
+
+  // Financial Year API - Updated to match new backend parameters
+  getFinancialYears: async (orgId, params = {}) => {
+    // Mocked list with fields matching UI expectations
+    const allYears = [
+      { id: 0, financialyearid: 0, fyname: 'All Financial Year', isclosed: 0, isdefault: 0, orgid: orgId },
+      { id: 1, financialyearid: 1, fyname: 'FY 2024-25',        isclosed: 0, isdefault: 1, orgid: orgId },
+      { id: 2, financialyearid: 2, fyname: 'FY 2023-24',        isclosed: 1, isdefault: 0, orgid: orgId },
+    ];
+    // Apply simple filters if provided
+    let filtered = [...allYears];
+    if (params.isclosed !== undefined) {
+      filtered = filtered.filter(y => Number(y.isclosed) === Number(params.isclosed));
+    }
+    return filtered;
+  },
+
+  getCurrentFinancialYear: async (orgId) => {
+    // Mocked default/open FY
+    return { id: 1, financialyearid: 1, fyname: 'FY 2024-25', isclosed: 0, isdefault: 1, orgid: orgId };
+  },
+
+  // Get active financial years (open years)
+  getActiveFinancialYears: async (orgId, params = {}) => {
+    const years = await dropdownAPI.getFinancialYears(orgId, { ...params, isclosed: 0 });
+    return years;
+  },
+
+  // Get closed financial years
+  getClosedFinancialYears: async (orgId, params = {}) => {
+    const years = await dropdownAPI.getFinancialYears(orgId, { ...params, isclosed: 1 });
+    return years;
+  }
+};
+
+// ========================================
+// BUSINESS UNIT API (using /master/api/business-units/ with JWT authentication)
+// ========================================
+// Business Unit API Service
+export const businessUnitAPI = {
+  // Get all business units with pagination and filtering
+  getAll: async (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    const endpoint = `/business-units/${queryString ? `?${queryString}` : ''}`;
+    
+    try {
+      const response = await api.get(endpoint);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching business units:', error);
+      throw error;
+    }
+  },
+
+  // Get active business units only
+  getActive: async (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    const endpoint = `/business-units/active/${queryString ? `?${queryString}` : ''}`;
+    
+    try {
+      const response = await api.get(endpoint);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching active business units:', error);
+      throw error;
+    }
+  },
+
+  // Get single business unit by ID
+  getById: async (id) => {
+    try {
+      const response = await api.get(`/business-units/${id}/`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching business unit by ID:', error);
+      throw error;
+    }
+  },
+
+  // Create new business unit
+  create: async (data) => {
+    // Ensure we have the required fields with proper structure
+    const businessUnitData = {
+      buname: data.buname,
+      bucode: data.bucode || '',
+      description: data.description || '',
+      deliveryheadid: data.deliveryheadid || null,
+      salesheadid: data.salesheadid || null,
+      services: data.services || [],
+      isactive: data.isactive !== undefined ? data.isactive : 1,
+      regionid: data.regionid || null,
+      statusreason: data.statusreason || '',
+      orgid: data.orgid,
+      addedby: data.addedby,
+      modifiedby: data.modifiedby,
+    };
+    
+    try {
+      const response = await api.post('/business-units/', businessUnitData);
+      return response.data;
+    } catch (error) {
+      console.error('Create business unit error:', error);
+      throw error;
+    }
+  },
+
+  // Update business unit completely
+  update: async (id, data) => {
+    // Ensure we have the required fields with proper structure
+    const businessUnitData = {
+      buname: data.buname,
+      bucode: data.bucode || '',
+      description: data.description || '',
+      deliveryheadid: data.deliveryheadid || null,
+      salesheadid: data.salesheadid || null,
+      services: data.services || [],
+      isactive: data.isactive !== undefined ? data.isactive : 1,
+      regionid: data.regionid || null,
+      statusreason: data.statusreason || '',
+      orgid: data.orgid,
+      addedby: data.addedby,
+      modifiedby: data.modifiedby,
+    };
+    
+    try {
+      const response = await api.put(`/business-units/${id}/`, businessUnitData);
+      return response.data;
+    } catch (error) {
+      console.error('Update business unit error:', error);
+      throw error;
+    }
+  },
+
+  // Partial update business unit
+  partialUpdate: async (id, data) => {
+    try {
+      const response = await api.patch(`/business-units/${id}/`, data);
+      return response.data;
+    } catch (error) {
+      console.error('Partial update business unit error:', error);
+      throw error;
+    }
+  },
+
+  // Delete business unit (soft delete)
+  delete: async (id, modifiedby = null) => {
+    try {
+      const deleteData = {};
+      if (modifiedby) {
+        deleteData.modifiedby = modifiedby;
+      }
+      
+      const response = await api.delete(`/business-units/${id}/`, {
+        data: Object.keys(deleteData).length > 0 ? deleteData : undefined
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Delete business unit error:', error);
+      throw error;
+    }
+  },
+
+  // Search business units
+  search: async (searchTerm, params = {}) => {
+    const searchParams = { 
+      ...params, 
+      search: searchTerm,
+      q: searchTerm,
+      query: searchTerm,
+      keyword: searchTerm,
+      // Add specific field searches for comprehensive search
+      buname: searchTerm,
+      bucode: searchTerm,
+      description: searchTerm,
+      deliveryheadname: searchTerm,
+      salesheadname: searchTerm,
+      regionname: searchTerm,
+      statusreason: searchTerm
+    };
+    
+    try {
+      const response = await api.get('/business-units/', { params: searchParams });
+      return response.data;
+    } catch (error) {
+      console.error('Search business units error:', error);
+      throw error;
+    }
+  },
+};
+
+// EXPORTS
+// ========================================
+// Export the main API instance
+export { api };
+
+// Export default
+export default api; 

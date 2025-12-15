@@ -1,0 +1,560 @@
+================================================================================
+                           COMPLETE API DOCUMENTATION
+================================================================================
+
+BASE CONFIGURATION
+================================================================================
+Base URL: http://192.168.0.190:8000
+API Prefix: /api/
+Content-Type: application/json
+Authentication: Bearer Token (JWT)
+
+================================================================================
+AUTHENTICATION APIs
+================================================================================
+
+1. Test Token
+   Endpoint: POST /auth/test-token/
+   Request Body:
+   {
+     "username": "user@example.com",
+     "password": "password123"
+   }
+   
+   Response:
+   {
+     "access": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+     "refresh": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+     "user": {
+       "id": 1,
+       "email": "user@example.com",
+       "first_name": "John",
+       "last_name": "Doe"
+     }
+   }
+
+2. Refresh Token
+   Endpoint: POST /token/refresh/
+   Request Body:
+   {
+     "refresh": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+   }
+
+3. Logout
+   Endpoint: POST /auth/logout/
+   Headers: Authorization: Bearer <token>
+
+4. User Profile
+   Endpoint: GET /auth/profile/
+   Headers: Authorization: Bearer <token>
+
+================================================================================
+ASSET MANAGEMENT APIs
+================================================================================
+
+1. ASSET DETAILS
+   ==============
+
+   Get All Assets
+   Endpoint: GET /api/assets/asset-details/
+   
+   Parameters:
+   - page (int): Page number (default: 1)
+   - page_size (int): Items per page (default: 10)
+   - search (string): Search term
+   - ordering (string): Sort field (e.g., "assetnumber", "-purchasedate")
+   - isactive (int): Active status filter (1 or 0)
+   - isdeleted (int): Deleted status filter (0 or 1)
+   
+   Example Request:
+   GET /api/assets/asset-details/?page=1&page_size=20&search=laptop&ordering=-purchasedate&isactive=1&isdeleted=0
+   
+   Response:
+   {
+     "count": 150,
+     "next": "http://192.168.0.190:8000/api/assets/asset-details/?page=2",
+     "previous": null,
+     "results": [
+       {
+         "assetdetailsid": 1,
+         "assetnumber": "AST-001",
+         "model": "Dell Latitude 5520",
+         "serialnumber": "DL5520001",
+         "purchasedate": "2023-01-15",
+         "purchasecost": "1200.00",
+         "currentvalue": "800.00",
+         "status": 1,
+         "isactive": 1,
+         "isdeleted": 0,
+         "assettype_name": "Laptop",
+         "manufacturer_name": "Dell",
+         "vendor_name": "Amazon",
+         "assigned_employee_name": "John Smith",
+         "storedlocation": "Office Floor 1"
+       }
+     ]
+   }
+
+   Create Asset
+   Endpoint: POST /api/assets/asset-details/
+   Headers: Authorization: Bearer <token>
+   
+   Request Body:
+   {
+     "orgid": 962834,
+     "assettypeid": 1,
+     "status": 1,
+     "manufacturerid": 1,
+     "vendorid": 1,
+     "model": "Dell Latitude 5520",
+     "serialnumber": "DL5520001",
+     "purchasedate": "2023-01-15",
+     "purchasecost": "1200.00",
+     "currentvalue": "800.00",
+     "depreciationrate": "10.00",
+     "acquisitiontype": "Purchase",
+     "conditionid": 1,
+     "warrantystartdate": "2023-01-15",
+     "warrantyenddate": "2026-01-15",
+     "insurancedetails": "Covered by company insurance",
+     "description": "Business laptop for office use",
+     "employeeid": 123,
+     "isactive": 1,
+     "isdeleted": 0,
+     "storedlocation": "Office Floor 1",
+     "financialyearid": 2024,
+     "assignedondate": "2023-01-20"
+   }
+
+   Update Asset
+   Endpoint: PUT /api/assets/asset-details/{id}/
+   Endpoint: PATCH /api/assets/asset-details/{id}/
+
+   Delete Asset
+   Endpoint: DELETE /api/assets/asset-details/{id}/
+
+2. ASSET TYPES
+   ============
+
+   Get All Asset Types
+   Endpoint: GET /api/assets/asset-types/
+   
+   Parameters:
+   - page (int): Page number
+   - page_size (int): Items per page
+   - search (string): Search term
+   - isactive (int): Active status
+   - ordering (string): Sort field
+   
+   Response:
+   {
+     "count": 25,
+     "results": [
+       {
+         "assettypeid": 1,
+         "assettypename": "Laptop",
+         "assettypeprefix": "LAP",
+         "assetdepreciationrate": "10.00",
+         "description": "Portable computers",
+         "isactive": 1,
+         "orgid": 962834,
+         "addeddate": "2023-01-01T00:00:00Z"
+       }
+     ]
+   }
+
+   Create Asset Type
+   Endpoint: POST /api/assets/asset-types/
+   
+   Request Body:
+   {
+     "assettypename": "Desktop Computer",
+     "assettypeprefix": "DESK",
+     "assetdepreciationrate": "8.00",
+     "description": "Desktop computers for office use",
+     "isactive": 1,
+     "orgid": 962834,
+     "addedby": 1
+   }
+
+3. MANUFACTURERS
+   ==============
+
+   Get All Manufacturers
+   Endpoint: GET /api/assets/manufacturers/
+   
+   Parameters: Same as Asset Types
+   
+   Response:
+   {
+     "count": 50,
+     "results": [
+       {
+         "manufacturerid": 1,
+         "manufacturername": "Dell Technologies",
+         "description": "Computer hardware manufacturer",
+         "isactive": 1,
+         "orgid": 962834,
+         "addeddate": "2023-01-01T00:00:00Z"
+       }
+     ]
+   }
+
+   Create Manufacturer
+   Endpoint: POST /api/assets/manufacturers/
+   
+   Request Body:
+   {
+     "manufacturername": "HP Inc.",
+     "description": "Technology company",
+     "orgid": 962834,
+     "addedby": 1
+   }
+
+4. VENDORS
+   ========
+
+   Get All Vendors
+   Endpoint: GET /api/assets/asset-vendors/
+   
+   Parameters: Same as Asset Types + isdeleted
+   
+   Response:
+   {
+     "count": 30,
+     "results": [
+       {
+         "assetvendorid": 1,
+         "vendorname": "Amazon Business",
+         "gstno": "29ABCDE1234F1Z5",
+         "contactperson": "John Doe",
+         "email": "business@amazon.com",
+         "mobilenumber": "+1234567890",
+         "address": "123 Business St, City, State",
+         "isactive": 1,
+         "isdeleted": 0,
+         "orgid": 962834
+       }
+     ]
+   }
+
+   Create Vendor
+   Endpoint: POST /api/assets/asset-vendors/
+   
+   Request Body:
+   {
+     "vendorname": "Microsoft Store",
+     "gstno": "29ABCDE1234F1Z5",
+     "contactperson": "Jane Smith",
+     "email": "business@microsoft.com",
+     "mobilenumber": "+1234567890",
+     "address": "456 Tech Ave, City, State",
+     "countryid": 1,
+     "stateid": 1,
+     "cityid": 1,
+     "zip": "12345",
+     "description": "Software and hardware vendor",
+     "isactive": 1,
+     "isdeleted": 0,
+     "orgid": 962834
+   }
+
+================================================================================
+EMPLOYEE APIs
+================================================================================
+
+Get Active Employees (Dropdown)
+Endpoint: GET /api/employees/employees/active_employees_dropdown/
+Parameters: None
+
+Response:
+[
+  {
+    "employeeid": 123,
+    "name": "John Smith",
+    "email": "john.smith@company.com"
+  },
+  {
+    "employeeid": 124,
+    "name": "Jane Doe",
+    "email": "jane.doe@company.com"
+  }
+]
+
+================================================================================
+MASTER CODES DROPDOWN APIs
+================================================================================
+
+1. Asset Status Dropdown
+   Endpoint: GET /api/master/codes/asset_status_dropdown/
+   
+   Response:
+   [
+     {
+       "codeid": 1,
+       "codename": "Active",
+       "codegroup": "asset_status"
+     },
+     {
+       "codeid": 2,
+       "codename": "Inactive",
+       "codegroup": "asset_status"
+     }
+   ]
+
+2. Asset Condition Dropdown
+   Endpoint: GET /api/master/codes/asset_condition_dropdown/
+   
+   Response:
+   [
+     {
+       "codeid": 1,
+       "codename": "Excellent",
+       "codegroup": "asset_condition"
+     },
+     {
+       "codeid": 2,
+       "codename": "Good",
+       "codegroup": "asset_condition"
+     },
+     {
+       "codeid": 3,
+       "codename": "Fair",
+       "codegroup": "asset_condition"
+     },
+     {
+       "codeid": 4,
+       "codename": "Poor",
+       "codegroup": "asset_condition"
+     }
+   ]
+
+3. Other Dropdown APIs
+   ====================
+   GET /api/master/codes/crm_deal_status_dropdown/
+   GET /api/master/codes/crm_lead_status_dropdown/
+   GET /api/master/codes/crm_lead_source_dropdown/
+   GET /api/master/codes/client_type_dropdown/
+   GET /api/master/codes/payment_status_dropdown/
+   GET /api/master/codes/industry_type_dropdown/
+   GET /api/master/codes/compliance_status_dropdown/
+   GET /api/master/codes/compliance_type_dropdown/
+   GET /api/master/codes/task_status_dropdown/
+   GET /api/master/codes/task_priority_dropdown/
+   GET /api/master/codes/gender_dropdown/
+   GET /api/master/codes/payment_mode_dropdown/
+
+================================================================================
+LOCATION APIs
+================================================================================
+
+1. COUNTRIES
+   ==========
+
+   Get All Countries
+   Endpoint: GET /api/master/countries/
+   Endpoint: GET /api/master/countries/active_countries/
+   
+   Parameters:
+   - search (string): Search by name or code
+   - page (int): Page number
+   - page_size (int): Items per page
+   
+   Response:
+   {
+     "count": 195,
+     "results": [
+       {
+         "countryid": 1,
+         "countryname": "United States",
+         "countrycode": "US",
+         "isactive": 1
+       }
+     ]
+   }
+
+2. STATES
+   =======
+
+   Get All States
+   Endpoint: GET /api/master/states/
+   Endpoint: GET /api/master/states/active_states/
+
+   Get States by Country
+   Endpoint: GET /api/master/states/states_by_country/
+   
+   Parameters:
+   - country_id (int): Country ID (required)
+   
+   Response:
+   [
+     {
+       "stateid": 1,
+       "statename": "California",
+       "statecode": "CA",
+       "countryid": 1,
+       "isactive": 1
+     }
+   ]
+
+3. CITIES
+   =======
+
+   Get All Cities
+   Endpoint: GET /api/master/cities/
+   Endpoint: GET /api/master/cities/active_cities/
+
+   Get Cities by State
+   Endpoint: GET /api/master/cities/cities_by_state/
+   
+   Parameters:
+   - state_id (int): State ID (required)
+   
+   Response:
+   [
+     {
+       "cityid": 1,
+       "cityname": "Los Angeles",
+       "stateid": 1,
+       "isactive": 1
+     }
+   ]
+
+================================================================================
+DEVELOPER TOOLS APIs
+================================================================================
+
+1. Get Codes by Group
+   Endpoint: GET /api/master/codes/codes_by_group/
+   
+   Parameters:
+   - code_group (string): Code group name (required)
+   
+   Example: GET /api/master/codes/codes_by_group/?code_group=asset_status
+
+2. Get All Dropdown Groups
+   Endpoint: GET /api/master/codes/all_dropdown_groups/
+
+================================================================================
+COMMON PARAMETERS
+================================================================================
+
+| Parameter  | Type   | Description                    | Example           |
+|------------|--------|--------------------------------|-------------------|
+| page       | int    | Page number for pagination     | 1                 |
+| page_size  | int    | Number of items per page       | 10, 20, 50        |
+| search     | string | Search term for filtering      | "laptop"          |
+| ordering   | string | Sort field (- for descending) | "name", "-date"   |
+| isactive   | int    | Filter by active status        | 1 (active), 0     |
+| isdeleted  | int    | Filter by deleted status       | 0 (not deleted)   |
+
+================================================================================
+RESPONSE FORMATS
+================================================================================
+
+1. Paginated Response
+   {
+     "count": 100,
+     "next": "http://api.example.com/endpoint/?page=2",
+     "previous": null,
+     "results": [...]
+   }
+
+2. Error Response
+   {
+     "error": "Error message",
+     "detail": "Detailed error description",
+     "status_code": 400
+   }
+
+3. Success Response (Create/Update)
+   {
+     "id": 1,
+     "message": "Success message",
+     "data": {...}
+   }
+
+================================================================================
+AUTHENTICATION HEADERS
+================================================================================
+
+All authenticated endpoints require:
+Authorization: Bearer <your_jwt_token>
+Content-Type: application/json
+
+================================================================================
+STATUS CODES
+================================================================================
+
+| Code | Description           |
+|------|-----------------------|
+| 200  | Success               |
+| 201  | Created               |
+| 400  | Bad Request           |
+| 401  | Unauthorized          |
+| 403  | Forbidden             |
+| 404  | Not Found             |
+| 500  | Internal Server Error |
+
+================================================================================
+QUICK START EXAMPLES
+================================================================================
+
+1. Get All Active Assets
+   curl -X GET "http://192.168.0.190:8000/api/assets/asset-details/?isactive=1&isdeleted=0" \
+     -H "Authorization: Bearer <your_token>"
+
+2. Search for Laptops
+   curl -X GET "http://192.168.0.190:8000/api/assets/asset-details/?search=laptop&ordering=-purchasedate" \
+     -H "Authorization: Bearer <your_token>"
+
+3. Get Employee Dropdown
+   curl -X GET "http://192.168.0.190:8000/api/employees/employees/active_employees_dropdown/"
+
+4. Get Asset Status Options
+   curl -X GET "http://192.168.0.190:8000/api/master/codes/asset_status_dropdown/"
+
+5. Get States by Country
+   curl -X GET "http://192.168.0.190:8000/api/master/states/states_by_country/?country_id=1"
+
+6. Get Cities by State
+   curl -X GET "http://192.168.0.190:8000/api/master/cities/cities_by_state/?state_id=5"
+
+7. Search Manufacturers
+   curl -X GET "http://192.168.0.190:8000/api/assets/manufacturers/?search=dell&isactive=1&ordering=-addeddate" \
+     -H "Authorization: Bearer <your_token>"
+
+8. Create New Asset
+   curl -X POST "http://192.168.0.190:8000/api/assets/asset-details/" \
+     -H "Authorization: Bearer <your_token>" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "orgid": 962834,
+       "assettypeid": 1,
+       "status": 1,
+       "manufacturerid": 1,
+       "vendorid": 1,
+       "model": "Dell Latitude 5520",
+       "serialnumber": "DL5520001",
+       "purchasedate": "2023-01-15",
+       "purchasecost": "1200.00",
+       "currentvalue": "800.00",
+       "isactive": 1,
+       "isdeleted": 0
+     }'
+
+================================================================================
+NOTES
+================================================================================
+
+- All API endpoints now use the correct /api/ prefix
+- Employee dropdown endpoint doesn't require authentication
+- All other endpoints require Bearer token authentication
+- Pagination is supported on most list endpoints
+- Search functionality is available on most endpoints
+- All dates should be in YYYY-MM-DD format
+- All monetary values should be strings with decimal places
+
+================================================================================
+END OF DOCUMENTATION
+================================================================================
