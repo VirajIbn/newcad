@@ -231,7 +231,7 @@ const Login = () => {
       {/* Header */}
       <header className="w-full h-16 md:h-[90px] bg-white shadow-sm border-b-3 border-gray-200 flex items-center justify-between px-4 md:px-6 relative z-20">
                           <div className="flex items-center">
-          <img src="src/images/cad_logo.png" alt="CADashboard logo" className="h-[167px] w-[133px] md:h-[267px] md:w-[200px] lg:h-[333px] lg:w-[267px] xl:h-[400px] xl:w-[300px] 2xl:h-[467px] 2xl:w-[333px] object-contain drop-shadow-lg" />
+          <img src="/images/cad_logo.png" alt="CADashboard logo" className="h-[167px] w-[133px] md:h-[267px] md:w-[200px] lg:h-[333px] lg:w-[267px] xl:h-[400px] xl:w-[300px] 2xl:h-[467px] 2xl:w-[333px] object-contain drop-shadow-lg" />
         </div>
         <div className="flex items-center space-x-3">
           <Button variant="ghost" size="sm" className="bg-gray-100 hover:bg-gray-200 text-black font-medium px-4 py-2 rounded-lg">
@@ -286,7 +286,7 @@ const Login = () => {
             {/* Illustration - Positioned to the right with proper sizing */}
             <div className="lg:w-1/2 flex justify-end mt-8 lg:mt-0">
               <img 
-                src="src/images/lady-working.png.png" 
+                src="/images/lady-working.png.png" 
                 alt="Lady working" 
                 className="w-auto h-[350px] md:h-[450px] lg:h-[550px] object-contain"
               />
@@ -306,8 +306,8 @@ const Login = () => {
 
             {/* Security Badges - positioned at bottom left */}
             <div className="absolute bottom-8 left-12 flex space-x-4">
-              <img src="src/images/godaddy.gif" alt="GoDaddy" className="h-12 w-auto" />
-              <img src="src/images/AWS_Logo.png" alt="AWS" className="h-12 w-auto" />
+              <img src="/images/godaddy.gif" alt="GoDaddy" className="h-12 w-auto" />
+              <img src="/images/AWS_Logo.png" alt="AWS" className="h-12 w-auto" />
             </div>
           </div>
         </div>

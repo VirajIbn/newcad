@@ -1,0 +1,8 @@
+<svg width="140" height="32" viewBox="0 0 140 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Leaf Icon - Simplified and smaller -->
+  <path d="M6 6C6 3 9 1 12 1C15 1 18 3 18 6C18 9 15 11 12 11C9 11 6 9 6 6Z" fill="#32CD32"/>
+  <path d="M12 1C12 4 10 7 8 9C6 11 4 13 4 16C4 19 7 21 10 21C13 21 16 19 16 16C16 13 14 10 12 8C10 6 8 4 6 2" fill="#228B22" fillOpacity="0.7"/>
+  
+  <!-- CADASHBOARD Text - Better positioned and sized -->
+  <text x="26" y="20" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#0066CC" letter-spacing="0.5">CADASHBOARD</text>
+</svg>

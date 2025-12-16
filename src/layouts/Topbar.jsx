@@ -139,7 +139,7 @@ const Topbar = ({ onToggleSidebar, isSidebarCollapsed }) => {
       {/* Left Section - Logo and Hamburger Menu */}
       <div className="flex items-center space-x-3">
         <img 
-          src="/src/orglogo/cadashboard_logo.png" 
+          src="/orglogo/cadashboard_logo.png" 
           alt="Company Logo" 
           className="h-10 w-auto object-contain max-w-[180px]"
           onError={(e) => {
