@@ -157,7 +157,7 @@ function App() {
 The API endpoints are configured in `src/config/backend.js`:
 ```javascript
 export const BACKEND_CONFIG = {
-  IP: '192.168.0.190',
+  IP: '172.16.16.161',
   PORT: '8000',
   API_BASE_PATH: '/api',
   PROTOCOL: 'http',
@@ -168,8 +168,7 @@ export const BACKEND_CONFIG = {
 
 ### Network Access
 - **Local development**: `http://localhost:8000/assets/api/`
-- **Primary Server**: `http://192.168.0.190:8000/assets/api/`
-- **Alternative Server**: `http://13.233.21.121:8000/assets/api/`
+- **Network access**: `http://172.16.16.161:8000/assets/api/`
 
 ## Error Handling
 

@@ -5,10 +5,6 @@ This implementation adds a countries dropdown to the vendor add/edit form by fet
 
 ## Backend API Details
 
-### Server Configuration
-- **Primary Server**: `192.168.0.190:8000`
-- **Alternative Server**: `13.233.21.121:8000`
-
 ### Primary Endpoint (Recommended for Dropdowns)
 - **URL**: `GET /api/master/countries/active_countries/`
 - **Description**: Returns all non-deleted countries

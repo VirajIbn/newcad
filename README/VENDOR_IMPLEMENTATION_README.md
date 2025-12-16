@@ -45,12 +45,8 @@ The vendor module integrates with the following backend API endpoints:
 
 ### Base URL
 ```
-http://192.168.0.190:8000/assets/api/
+http://172.16.16.161:8000/assets/api/
 ```
-
-### Available Servers
-- **Primary Server**: `192.168.0.190:8000`
-- **Alternative Server**: `13.233.21.121:8000`
 
 ### Endpoints
 - `GET /asset-vendors/` - List all vendors with pagination and filtering
@@ -188,7 +184,7 @@ The vendor API uses the same configuration as other asset APIs:
 ```javascript
 // src/config/backend.js
 export const BACKEND_CONFIG = {
-  IP: '192.168.0.190',
+  IP: '172.16.16.161',
   PORT: '8000',
   API_BASE_PATH: '/api',
   PROTOCOL: 'http',
@@ -242,7 +238,7 @@ The vendor module includes comprehensive error handling:
 
 To test the vendor functionality:
 
-1. **Ensure Backend is Running**: Backend should be accessible at `192.168.0.190:8000`
+1. **Ensure Backend is Running**: Backend should be accessible at `172.16.16.161:8000`
 2. **Login**: User must be authenticated with valid JWT token
 3. **Test CRUD Operations**: Create, read, update, and delete vendors
 4. **Test Search**: Use the search functionality with various terms

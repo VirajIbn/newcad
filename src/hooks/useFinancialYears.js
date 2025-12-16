@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'react-toastify';
-import { CURRENT_CONFIG } from '../config/backend';
+const DEBUG = true;
 import { dropdownAPI } from '../services/api';
 
 const useFinancialYears = (orgId) => {
@@ -55,7 +55,7 @@ const useFinancialYears = (orgId) => {
       // Always log for debugging default year issue
       const defaultYear = transformedData.find(year => year.isdefault === 1);
       
-      if (CURRENT_CONFIG.DEBUG) {
+      if (DEBUG) {
       }
     } catch (err) {
       console.error('❌ Error fetching financial years:', err);

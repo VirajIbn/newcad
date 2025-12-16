@@ -2,12 +2,6 @@
 
 You're absolutely right - sorting should be simple! I've created a **reusable sorting solution** that you can use in **any table/grid** with just a few lines of code.
 
-## Backend Configuration
-
-This implementation works with the configured backend servers:
-- **Primary Server**: `192.168.0.190:8000`
-- **Alternative Server**: `13.233.21.121:8000`
-
 ## ✨ What You Get
 
 - **Click any column header to sort** (ascending/descending)

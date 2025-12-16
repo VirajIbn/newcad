@@ -1,9 +1,5 @@
 # Backend Configuration Guide
 
-## 🌐 **Available Backend Servers**
-- **Primary Server**: `192.168.0.190:8000`
-- **Alternative Server**: `13.233.21.121:8000`
-
 ## 🎯 **Quick Setup - Change IP Address in One Place**
 
 ### **File to Modify**: `src/config/backend.js`
@@ -11,8 +7,7 @@
 ```javascript
 export const BACKEND_CONFIG = {
   // Change this IP address to match your backend server
-  IP: '192.168.0.190',  // ← PRIMARY SERVER
-  // IP: '13.233.21.121', // ← ALTERNATIVE SERVER
+  IP: '172.16.16.161',  // ← CHANGE THIS IP ADDRESS
   
   // Backend server port
   PORT: '8000',          // ← CHANGE THIS PORT IF NEEDED
@@ -41,12 +36,12 @@ export const BACKEND_CONFIG = {
 ### **2. Automatic URL Generation**
 ```javascript
 // Your backend URL is automatically generated as:
-// http://192.168.0.190:8000/api/auth
+// http://172.16.16.161:8000/api/auth
 
 // All API endpoints automatically use this base URL:
-// - http://192.168.0.190:8000/api/auth/login/
-// - http://192.168.0.190:8000/api/auth/assets
-// - http://192.168.0.190:8000/api/auth/maintenance
+// - http://172.16.16.161:8000/api/auth/login/
+// - http://172.16.16.161:8000/api/auth/assets
+// - http://172.16.16.161:8000/api/auth/maintenance
 // etc...
 ```
 
@@ -61,7 +56,7 @@ export const BACKEND_CONFIG = {
 ```javascript
 // In src/config/backend.js
 export const BACKEND_CONFIG = {
-  IP: '192.168.0.190',  // ← Current IP address
+  IP: '172.16.16.161',  // ← Changed from 192.168.0.190
   PORT: '8000',
   // ... rest stays the same
 };
@@ -71,7 +66,7 @@ export const BACKEND_CONFIG = {
 ```javascript
 // In src/config/backend.js
 export const BACKEND_CONFIG = {
-  IP: '192.168.0.190',
+  IP: '172.16.16.161',
   PORT: '9000',          // ← Changed from 8000
   // ... rest stays the same
 };
@@ -81,7 +76,7 @@ export const BACKEND_CONFIG = {
 ```javascript
 // In src/config/backend.js
 export const BACKEND_CONFIG = {
-  IP: '192.168.0.190',
+  IP: '172.16.16.161',
   PORT: '443',           // ← HTTPS port
   PROTOCOL: 'https',     // ← Changed from http
   // ... rest stays the same
@@ -106,7 +101,7 @@ export const getEnvironmentConfig = () => {
     case 'production':
       return {
         ...BACKEND_CONFIG,
-        IP: '192.168.0.190', // ← Production server
+        IP: '172.16.16.161', // ← Production server
         PORT: '8000',
         DEBUG: false,
       };
@@ -121,7 +116,7 @@ export const getEnvironmentConfig = () => {
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `IP` | string | `'192.168.0.190'` | Backend server IP address |
+| `IP` | string | `'172.16.16.161'` | Backend server IP address |
 | `PORT` | string | `'8000'` | Backend server port |
 | `API_BASE_PATH` | string | `'/api/auth'` | API base path |
 | `PROTOCOL` | string | `'http'` | Protocol (http/https) |

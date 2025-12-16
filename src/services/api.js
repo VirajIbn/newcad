@@ -1,14 +1,19 @@
 import axios from 'axios';
 import { toast } from 'react-toastify';
-import { getBackendUrl, getBaseBackendUrl, CURRENT_CONFIG } from '../config/backend';
 
 // ========================================
-// API INSTANCE CREATION
+// CONFIGURATION
 // ========================================
-// Create single axios instance for all API calls
+const DEBUG = true;
+const API_TIMEOUT = 10000;
+
+// ========================================
+// API INSTANCE CREATION (Mocked - no real backend)
+// ========================================
+// Create single axios instance for all API calls (mocked)
 const api = axios.create({
-  baseURL: getBackendUrl(),
-  timeout: CURRENT_CONFIG.TIMEOUT,
+  baseURL: '', // No real backend
+  timeout: API_TIMEOUT,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -24,7 +29,7 @@ api.interceptors.request.use(
     }
     
     // Debug logging if enabled
-    if (CURRENT_CONFIG.DEBUG) {
+    if (DEBUG) {
     }
     
     return config;
@@ -38,7 +43,7 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => {
     // Debug logging if enabled
-    if (CURRENT_CONFIG.DEBUG) {
+    if (DEBUG) {
 
     }
     return response;
@@ -48,7 +53,7 @@ api.interceptors.response.use(
       const { status, data } = error.response;
       
       // Debug logging if enabled
-      if (CURRENT_CONFIG.DEBUG) {
+      if (DEBUG) {
         console.error(`❌ API Error: ${status} ${error.config?.url}`, data);
       }
       
@@ -184,57 +189,20 @@ const getAuthToken = () => {
 // ========================================
 // MANUFACTURER API (using /assets/api/manufacturers/ with JWT authentication)
 // ========================================
-// API request helper for manufacturers
+// API request helper (MOCKED - returns mock data instead of real API calls)
 const apiRequest = async (endpoint, options = {}) => {
-  const token = getAuthToken();
+  // Simulate network delay
+  await new Promise(resolve => setTimeout(resolve, 300));
   
+  // Mock response based on endpoint
+  const method = options.method || 'GET';
   
-  if (token) {
-    
+  if (method === 'DELETE') {
+    return { success: true };
   }
   
-  const defaultHeaders = {
-    'Content-Type': 'application/json',
-  };
-  
-  // Always add Authorization header for manufacturer endpoints (they require JWT)
-  if (token) {
-    defaultHeaders['Authorization'] = `Bearer ${token}`;
-  }
-
-  const config = {
-    ...options,
-    headers: {
-      ...defaultHeaders,
-      ...options.headers,
-    },
-  };
-
-  try {
-    // Use the correct base URL for asset endpoints
-    const baseUrl = `${getBackendUrl()}/assets`;
-    // const baseUrl = 'http://13.233.21.121:8000/api/assets'; // Previous IP
-   // const baseUrl = 'http://172.16.16.161:8000/api/assets'; // Previous IP
-    const fullUrl = `${baseUrl}${endpoint}`;
-
-    
-    const response = await fetch(fullUrl, config);
-    
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || errorData.detail || `HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    // Handle 204 No Content (DELETE requests)
-    if (response.status === 204) {
-      return { success: true };
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('API Request Error:', error);
-    throw error;
-  }
+  // Return empty result for GET requests (will be handled by specific API functions)
+  return { results: [], count: 0 };
 };
 
 // Manufacturer API Service
@@ -924,155 +892,153 @@ export const vendorAPI = {
 };
 
 // ========================================
-// COUNTRIES API ENDPOINTS
+// COUNTRIES API ENDPOINTS (MOCKED)
 // ========================================
+const MOCK_COUNTRIES = [
+  { id: 1, countryid: 1, countryname: 'India', countrycode: 'IN', isactive: 1 },
+  { id: 2, countryid: 2, countryname: 'United States', countrycode: 'US', isactive: 1 },
+  { id: 3, countryid: 3, countryname: 'United Kingdom', countrycode: 'GB', isactive: 1 },
+  { id: 4, countryid: 4, countryname: 'Canada', countrycode: 'CA', isactive: 1 },
+  { id: 5, countryid: 5, countryname: 'Australia', countrycode: 'AU', isactive: 1 },
+  { id: 6, countryid: 6, countryname: 'Germany', countrycode: 'DE', isactive: 1 },
+  { id: 7, countryid: 7, countryname: 'France', countrycode: 'FR', isactive: 1 },
+  { id: 8, countryid: 8, countryname: 'Japan', countrycode: 'JP', isactive: 1 },
+];
+
 export const countriesAPI = {
-  // Get all active countries for dropdown (recommended endpoint)
+  // Get all active countries for dropdown (MOCKED)
   getActiveCountries: async () => {
-    try {
-      const response = await api.get('/master/countries/active_countries/');
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching active countries:', error);
-      throw error;
-    }
+    await new Promise(resolve => setTimeout(resolve, 200));
+    return MOCK_COUNTRIES.filter(c => c.isactive === 1);
   },
 
-  // Get all countries
+  // Get all countries (MOCKED)
   getAll: async (params = {}) => {
-    try {
-      const response = await api.get('/master/countries/', { params });
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching countries:', error);
-      throw error;
+    await new Promise(resolve => setTimeout(resolve, 200));
+    let results = [...MOCK_COUNTRIES];
+    
+    if (params.search) {
+      const search = params.search.toLowerCase();
+      results = results.filter(c => 
+        c.countryname.toLowerCase().includes(search) || 
+        c.countrycode.toLowerCase().includes(search)
+      );
     }
+    
+    return { results, count: results.length };
   },
 
-  // Search countries by name or code
+  // Search countries by name or code (MOCKED)
   searchCountries: async (searchTerm) => {
-    try {
-      const response = await api.get('/master/countries/', {
-        params: { search: searchTerm }
-      });
-      return response.data.results || response.data;
-    } catch (error) {
-      console.error('Error searching countries:', error);
-      throw error;
-    }
+    await new Promise(resolve => setTimeout(resolve, 200));
+    const search = searchTerm.toLowerCase();
+    return MOCK_COUNTRIES.filter(c => 
+      c.countryname.toLowerCase().includes(search) || 
+      c.countrycode.toLowerCase().includes(search)
+    );
   },
 
-  // Get country by ID
+  // Get country by ID (MOCKED)
   getById: async (countryId) => {
-    try {
-      const response = await api.get(`/master/countries/${countryId}/`);
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching country by ID:', error);
-      throw error;
-    }
+    await new Promise(resolve => setTimeout(resolve, 200));
+    return MOCK_COUNTRIES.find(c => c.id === countryId || c.countryid === countryId) || null;
   },
 
-  // Filter countries with custom parameters
+  // Filter countries with custom parameters (MOCKED)
   filter: async (filters = {}) => {
-    try {
-      const response = await api.get('/master/countries/', { params: filters });
-      return response.data;
-    } catch (error) {
-      console.error('Error filtering countries:', error);
-      throw error;
+    await new Promise(resolve => setTimeout(resolve, 200));
+    let results = [...MOCK_COUNTRIES];
+    
+    if (filters.search) {
+      const search = filters.search.toLowerCase();
+      results = results.filter(c => 
+        c.countryname.toLowerCase().includes(search) || 
+        c.countrycode.toLowerCase().includes(search)
+      );
     }
+    
+    return { results, count: results.length };
   },
 };
 
 // ========================================
-// STATES API ENDPOINTS
+// STATES API ENDPOINTS (MOCKED)
 // ========================================
+const MOCK_STATES = [
+  { id: 1, stateid: 1, statename: 'Maharashtra', statecode: 'MH', countryid: 1, isactive: 1 },
+  { id: 2, stateid: 2, statename: 'Karnataka', statecode: 'KA', countryid: 1, isactive: 1 },
+  { id: 3, stateid: 3, statename: 'Tamil Nadu', statecode: 'TN', countryid: 1, isactive: 1 },
+  { id: 4, stateid: 4, statename: 'Gujarat', statecode: 'GJ', countryid: 1, isactive: 1 },
+  { id: 5, stateid: 5, statename: 'Delhi', statecode: 'DL', countryid: 1, isactive: 1 },
+  { id: 6, stateid: 6, statename: 'California', statecode: 'CA', countryid: 2, isactive: 1 },
+  { id: 7, stateid: 7, statename: 'Texas', statecode: 'TX', countryid: 2, isactive: 1 },
+  { id: 8, stateid: 8, statename: 'New York', statecode: 'NY', countryid: 2, isactive: 1 },
+];
+
 export const statesAPI = {
-  // Get all active states
+  // Get all active states (MOCKED)
   getActiveStates: async () => {
-    try {
-      const response = await api.get('/master/states/active_states/');
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching active states:', error);
-      throw error;
-    }
+    await new Promise(resolve => setTimeout(resolve, 200));
+    return MOCK_STATES.filter(s => s.isactive === 1);
   },
 
-  // Get states by country (for cascading dropdown)
+  // Get states by country (for cascading dropdown) (MOCKED)
   getStatesByCountry: async (countryId) => {
-    try {
-      const response = await api.get('/master/states/states_by_country/', {
-        params: { country_id: countryId }
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching states by country:', error);
-      throw error;
-    }
+    await new Promise(resolve => setTimeout(resolve, 200));
+    return MOCK_STATES.filter(s => s.countryid === countryId && s.isactive === 1);
   },
 
-  // Debug states (for development/testing)
+  // Debug states (for development/testing) (MOCKED)
   getDebugStates: async () => {
-    try {
-      const response = await api.get('/master/states/debug_states/');
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching debug states:', error);
-      throw error;
-    }
+    await new Promise(resolve => setTimeout(resolve, 200));
+    return MOCK_STATES;
   },
 
-  // Get state by ID
+  // Get state by ID (MOCKED)
   getById: async (stateId) => {
-    try {
-      const response = await api.get(`/master/states/${stateId}/`);
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching state by ID:', error);
-      throw error;
-    }
+    await new Promise(resolve => setTimeout(resolve, 200));
+    return MOCK_STATES.find(s => s.id === stateId || s.stateid === stateId) || null;
   },
 };
 
 // ========================================
-// CITIES API ENDPOINTS
+// CITIES API ENDPOINTS (MOCKED)
 // ========================================
+const MOCK_CITIES = [
+  { id: 1, cityid: 1, cityname: 'Mumbai', stateid: 1, isactive: 1 },
+  { id: 2, cityid: 2, cityname: 'Pune', stateid: 1, isactive: 1 },
+  { id: 3, cityid: 3, cityname: 'Bangalore', stateid: 2, isactive: 1 },
+  { id: 4, cityid: 4, cityname: 'Mysore', stateid: 2, isactive: 1 },
+  { id: 5, cityid: 5, cityname: 'Chennai', stateid: 3, isactive: 1 },
+  { id: 6, cityid: 6, cityname: 'Coimbatore', stateid: 3, isactive: 1 },
+  { id: 7, cityid: 7, cityname: 'Ahmedabad', stateid: 4, isactive: 1 },
+  { id: 8, cityid: 8, cityname: 'Surat', stateid: 4, isactive: 1 },
+  { id: 9, cityid: 9, cityname: 'New Delhi', stateid: 5, isactive: 1 },
+  { id: 10, cityid: 10, cityname: 'Los Angeles', stateid: 6, isactive: 1 },
+  { id: 11, cityid: 11, cityname: 'San Francisco', stateid: 6, isactive: 1 },
+  { id: 12, cityid: 12, cityname: 'Houston', stateid: 7, isactive: 1 },
+  { id: 13, cityid: 13, cityname: 'Dallas', stateid: 7, isactive: 1 },
+  { id: 14, cityid: 14, cityname: 'New York City', stateid: 8, isactive: 1 },
+  { id: 15, cityid: 15, cityname: 'Buffalo', stateid: 8, isactive: 1 },
+];
+
 export const citiesAPI = {
-  // Get all active cities
+  // Get all active cities (MOCKED)
   getActiveCities: async () => {
-    try {
-      const response = await api.get('/master/cities/active_cities/');
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching active cities:', error);
-      throw error;
-    }
+    await new Promise(resolve => setTimeout(resolve, 200));
+    return MOCK_CITIES.filter(c => c.isactive === 1);
   },
 
-  // Get cities by state (for cascading dropdown)
+  // Get cities by state (for cascading dropdown) (MOCKED)
   getCitiesByState: async (stateId) => {
-    try {
-      const response = await api.get('/master/cities/cities_by_state/', {
-        params: { state_id: stateId }
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching cities by state:', error);
-      throw error;
-    }
+    await new Promise(resolve => setTimeout(resolve, 200));
+    return MOCK_CITIES.filter(c => c.stateid === stateId && c.isactive === 1);
   },
 
-  // Get city by ID
+  // Get city by ID (MOCKED)
   getById: async (cityId) => {
-    try {
-      const response = await api.get(`/master/cities/${cityId}/`);
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching city by ID:', error);
-      throw error;
-    }
+    await new Promise(resolve => setTimeout(resolve, 200));
+    return MOCK_CITIES.find(c => c.id === cityId || c.cityid === cityId) || null;
   },
 };
 
@@ -1424,35 +1390,39 @@ export const dropdownAPI = {
     ];
   },
 
-  // CRM Dropdowns
+  // CRM Dropdowns (MOCKED)
   getCrmDealStatus: async () => {
-    try {
-      const response = await api.get('/master/codes/crm_deal_status_dropdown/');
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching CRM deal status dropdown:', error);
-      throw error;
-    }
+    await new Promise(resolve => setTimeout(resolve, 200));
+    return [
+      { codeid: 101, codename: 'New' },
+      { codeid: 102, codename: 'Qualified' },
+      { codeid: 103, codename: 'Proposal' },
+      { codeid: 104, codename: 'Negotiation' },
+      { codeid: 105, codename: 'Won' },
+      { codeid: 106, codename: 'Lost' },
+    ];
   },
 
   getCrmLeadStatus: async () => {
-    try {
-      const response = await api.get('/master/codes/crm_lead_status_dropdown/');
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching CRM lead status dropdown:', error);
-      throw error;
-    }
+    await new Promise(resolve => setTimeout(resolve, 200));
+    return [
+      { codeid: 201, codename: 'New' },
+      { codeid: 202, codename: 'Contacted' },
+      { codeid: 203, codename: 'Qualified' },
+      { codeid: 204, codename: 'Converted' },
+      { codeid: 205, codename: 'Lost' },
+    ];
   },
 
   getCrmLeadSource: async () => {
-    try {
-      const response = await api.get('/master/codes/crm_lead_source_dropdown/');
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching CRM lead source dropdown:', error);
-      throw error;
-    }
+    await new Promise(resolve => setTimeout(resolve, 200));
+    return [
+      { codeid: 301, codename: 'Website' },
+      { codeid: 302, codename: 'Referral' },
+      { codeid: 303, codename: 'Social Media' },
+      { codeid: 304, codename: 'Email Campaign' },
+      { codeid: 305, codename: 'Cold Call' },
+    ];
   },
 
   // Organization Dropdowns
@@ -1521,46 +1491,36 @@ export const dropdownAPI = {
   },
 
 
-  // General Utility Dropdowns
+  // General Utility Dropdowns (MOCKED)
   getGender: async () => {
-    try {
-      const response = await api.get('/master/codes/gender_dropdown/');
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching gender dropdown:', error);
-      throw error;
-    }
+    await new Promise(resolve => setTimeout(resolve, 200));
+    return [
+      { codeid: 1, codename: 'Male' },
+      { codeid: 2, codename: 'Female' },
+      { codeid: 3, codename: 'Other' },
+    ];
   },
 
   getPaymentMode: async () => {
-    try {
-      const response = await api.get('/master/codes/payment_mode_dropdown/');
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching payment mode dropdown:', error);
-      throw error;
-    }
+    await new Promise(resolve => setTimeout(resolve, 200));
+    return [
+      { codeid: 1, codename: 'Cash' },
+      { codeid: 2, codename: 'Credit Card' },
+      { codeid: 3, codename: 'Bank Transfer' },
+      { codeid: 4, codename: 'Cheque' },
+      { codeid: 5, codename: 'UPI' },
+    ];
   },
 
-  // Developer Tools
+  // Developer Tools (MOCKED)
   getCodesByGroup: async (codeGroup) => {
-    try {
-      const response = await api.get(`/master/codes/codes_by_group/?code_group=${codeGroup}`);
-      return response.data;
-    } catch (error) {
-      console.error(`Error fetching codes for group ${codeGroup}:`, error);
-      throw error;
-    }
+    await new Promise(resolve => setTimeout(resolve, 200));
+    return [];
   },
 
   getAllDropdownGroups: async () => {
-    try {
-      const response = await api.get('/master/codes/all_dropdown_groups/');
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching all dropdown groups:', error);
-      throw error;
-    }
+    await new Promise(resolve => setTimeout(resolve, 200));
+    return [];
   },
 
   // Financial Year API - Updated to match new backend parameters
@@ -1598,157 +1558,111 @@ export const dropdownAPI = {
 };
 
 // ========================================
-// BUSINESS UNIT API (using /master/api/business-units/ with JWT authentication)
+// BUSINESS UNIT API (MOCKED)
 // ========================================
-// Business Unit API Service
+const MOCK_BUSINESS_UNITS = [
+  { id: 1, buid: 1, buname: 'IT Services', bucode: 'IT', isactive: 1, orgid: 962834 },
+  { id: 2, buid: 2, buname: 'Finance', bucode: 'FIN', isactive: 1, orgid: 962834 },
+  { id: 3, buid: 3, buname: 'HR', bucode: 'HR', isactive: 1, orgid: 962834 },
+  { id: 4, buid: 4, buname: 'Operations', bucode: 'OPS', isactive: 1, orgid: 962834 },
+];
+
 export const businessUnitAPI = {
-  // Get all business units with pagination and filtering
+  // Get all business units with pagination and filtering (MOCKED)
   getAll: async (params = {}) => {
-    const queryString = new URLSearchParams(params).toString();
-    const endpoint = `/business-units/${queryString ? `?${queryString}` : ''}`;
+    await new Promise(resolve => setTimeout(resolve, 300));
+    let results = [...MOCK_BUSINESS_UNITS];
     
-    try {
-      const response = await api.get(endpoint);
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching business units:', error);
-      throw error;
+    if (params.search) {
+      const search = params.search.toLowerCase();
+      results = results.filter(bu => 
+        bu.buname.toLowerCase().includes(search) || 
+        bu.bucode.toLowerCase().includes(search)
+      );
     }
+    
+    return { results, count: results.length };
   },
 
-  // Get active business units only
+  // Get active business units only (MOCKED)
   getActive: async (params = {}) => {
-    const queryString = new URLSearchParams(params).toString();
-    const endpoint = `/business-units/active/${queryString ? `?${queryString}` : ''}`;
+    await new Promise(resolve => setTimeout(resolve, 300));
+    let results = MOCK_BUSINESS_UNITS.filter(bu => bu.isactive === 1);
     
-    try {
-      const response = await api.get(endpoint);
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching active business units:', error);
-      throw error;
+    if (params.search) {
+      const search = params.search.toLowerCase();
+      results = results.filter(bu => 
+        bu.buname.toLowerCase().includes(search) || 
+        bu.bucode.toLowerCase().includes(search)
+      );
     }
+    
+    return { results, count: results.length };
   },
 
-  // Get single business unit by ID
+  // Get single business unit by ID (MOCKED)
   getById: async (id) => {
-    try {
-      const response = await api.get(`/business-units/${id}/`);
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching business unit by ID:', error);
-      throw error;
-    }
+    await new Promise(resolve => setTimeout(resolve, 200));
+    return MOCK_BUSINESS_UNITS.find(bu => bu.id === id || bu.buid === id) || null;
   },
 
-  // Create new business unit
+  // Create new business unit (MOCKED)
   create: async (data) => {
-    // Ensure we have the required fields with proper structure
-    const businessUnitData = {
-      buname: data.buname,
-      bucode: data.bucode || '',
-      description: data.description || '',
-      deliveryheadid: data.deliveryheadid || null,
-      salesheadid: data.salesheadid || null,
-      services: data.services || [],
+    await new Promise(resolve => setTimeout(resolve, 300));
+    const newId = Math.max(...MOCK_BUSINESS_UNITS.map(bu => bu.id)) + 1;
+    const newBU = {
+      id: newId,
+      buid: newId,
+      ...data,
       isactive: data.isactive !== undefined ? data.isactive : 1,
-      regionid: data.regionid || null,
-      statusreason: data.statusreason || '',
-      orgid: data.orgid,
-      addedby: data.addedby,
-      modifiedby: data.modifiedby,
     };
-    
-    try {
-      const response = await api.post('/business-units/', businessUnitData);
-      return response.data;
-    } catch (error) {
-      console.error('Create business unit error:', error);
-      throw error;
-    }
+    MOCK_BUSINESS_UNITS.push(newBU);
+    return newBU;
   },
 
-  // Update business unit completely
+  // Update business unit completely (MOCKED)
   update: async (id, data) => {
-    // Ensure we have the required fields with proper structure
-    const businessUnitData = {
-      buname: data.buname,
-      bucode: data.bucode || '',
-      description: data.description || '',
-      deliveryheadid: data.deliveryheadid || null,
-      salesheadid: data.salesheadid || null,
-      services: data.services || [],
-      isactive: data.isactive !== undefined ? data.isactive : 1,
-      regionid: data.regionid || null,
-      statusreason: data.statusreason || '',
-      orgid: data.orgid,
-      addedby: data.addedby,
-      modifiedby: data.modifiedby,
-    };
-    
-    try {
-      const response = await api.put(`/business-units/${id}/`, businessUnitData);
-      return response.data;
-    } catch (error) {
-      console.error('Update business unit error:', error);
-      throw error;
+    await new Promise(resolve => setTimeout(resolve, 300));
+    const index = MOCK_BUSINESS_UNITS.findIndex(bu => bu.id === id || bu.buid === id);
+    if (index !== -1) {
+      MOCK_BUSINESS_UNITS[index] = { ...MOCK_BUSINESS_UNITS[index], ...data };
+      return MOCK_BUSINESS_UNITS[index];
     }
+    throw new Error('Business unit not found');
   },
 
-  // Partial update business unit
+  // Partial update business unit (MOCKED)
   partialUpdate: async (id, data) => {
-    try {
-      const response = await api.patch(`/business-units/${id}/`, data);
-      return response.data;
-    } catch (error) {
-      console.error('Partial update business unit error:', error);
-      throw error;
+    await new Promise(resolve => setTimeout(resolve, 300));
+    const index = MOCK_BUSINESS_UNITS.findIndex(bu => bu.id === id || bu.buid === id);
+    if (index !== -1) {
+      MOCK_BUSINESS_UNITS[index] = { ...MOCK_BUSINESS_UNITS[index], ...data };
+      return MOCK_BUSINESS_UNITS[index];
     }
+    throw new Error('Business unit not found');
   },
 
-  // Delete business unit (soft delete)
+  // Delete business unit (soft delete) (MOCKED)
   delete: async (id, modifiedby = null) => {
-    try {
-      const deleteData = {};
-      if (modifiedby) {
-        deleteData.modifiedby = modifiedby;
-      }
-      
-      const response = await api.delete(`/business-units/${id}/`, {
-        data: Object.keys(deleteData).length > 0 ? deleteData : undefined
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Delete business unit error:', error);
-      throw error;
+    await new Promise(resolve => setTimeout(resolve, 300));
+    const index = MOCK_BUSINESS_UNITS.findIndex(bu => bu.id === id || bu.buid === id);
+    if (index !== -1) {
+      MOCK_BUSINESS_UNITS[index].isactive = 0;
+      return { success: true };
     }
+    throw new Error('Business unit not found');
   },
 
-  // Search business units
+  // Search business units (MOCKED)
   search: async (searchTerm, params = {}) => {
-    const searchParams = { 
-      ...params, 
-      search: searchTerm,
-      q: searchTerm,
-      query: searchTerm,
-      keyword: searchTerm,
-      // Add specific field searches for comprehensive search
-      buname: searchTerm,
-      bucode: searchTerm,
-      description: searchTerm,
-      deliveryheadname: searchTerm,
-      salesheadname: searchTerm,
-      regionname: searchTerm,
-      statusreason: searchTerm
-    };
-    
-    try {
-      const response = await api.get('/business-units/', { params: searchParams });
-      return response.data;
-    } catch (error) {
-      console.error('Search business units error:', error);
-      throw error;
-    }
+    await new Promise(resolve => setTimeout(resolve, 300));
+    const search = searchTerm.toLowerCase();
+    const results = MOCK_BUSINESS_UNITS.filter(bu => 
+      bu.buname.toLowerCase().includes(search) || 
+      bu.bucode.toLowerCase().includes(search) ||
+      (bu.description && bu.description.toLowerCase().includes(search))
+    );
+    return { results, count: results.length };
   },
 };
 

@@ -7,7 +7,6 @@ import { useDebounce } from '../../hooks/useDebounce';
 import { toast } from 'react-toastify';
 import { useFinancialYearContext } from '../../context/FinancialYearContext';
 import { useAuth } from '../../context/AuthContext';
-import { getBaseBackendUrl } from '../../config/backend';
 import Card from '../../components/ui/card';
 import Button from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -563,12 +562,8 @@ const AssetDetails = () => {
       return;
     }
     
-    // Construct the bulk insert URL
-    const baseUrl = getBaseBackendUrl();
-    const bulkInsertUrl = `${baseUrl}/bulk-insert-assets`;
-    
-    // Open bulk insert page in a new tab
-    window.open(bulkInsertUrl, '_blank', 'noopener,noreferrer');
+    // Mocked - bulk insert feature (no real backend)
+    toast.info('Bulk insert feature is not available in mock mode.');
   }, [selectedFinancialYear]);
 
   // Handle bulk insert menu toggle
@@ -586,19 +581,16 @@ const AssetDetails = () => {
       return;
     }
     
-    // Construct the base URL
-    const baseUrl = getBaseBackendUrl();
-    
+    // Mocked - bulk operations (no real backend)
     switch (option) {
       case 'bulk-update':
-        // Handle bulk update - open in new tab
+        // Handle bulk update - mocked
         const bulkUpdateUrl = `${baseUrl}/bulk-update-assets`;
         window.open(bulkUpdateUrl, '_blank', 'noopener,noreferrer');
         break;
       default:
-        // Handle bulk insert - open in new tab
-        const bulkInsertUrl = `${baseUrl}/bulk-insert-assets`;
-        window.open(bulkInsertUrl, '_blank', 'noopener,noreferrer');
+        // Handle bulk insert - mocked
+        toast.info('Bulk insert feature is not available in mock mode.');
     }
   }, [selectedFinancialYear]);
 

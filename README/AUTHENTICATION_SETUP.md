@@ -5,8 +5,7 @@ This document explains how the authentication API has been integrated into your 
 ## API Structure
 
 ### Single Base URL
-- **Primary Server**: `http://192.168.0.190:8000/api`
-- **Alternative Server**: `http://13.233.21.121:8000/api`
+- **Base URL**: `http://172.16.16.161:8000/api`
 - **All endpoints** (authentication, assets, maintenance, etc.) use this single base URL
 - **JWT token required** for all endpoints except authentication endpoints
 
@@ -51,7 +50,7 @@ This document explains how the authentication API has been integrated into your 
 ## Files Modified
 
 ### 1. `src/config/backend.js`
-- **Consolidated to single base URL**: `http://192.168.0.190:8000/api`
+- **Consolidated to single base URL**: `http://172.16.16.161:8000/api`
 - **Matches backend developer's structure** exactly
 - **Easy IP address changes** in one place
 
@@ -108,27 +107,27 @@ Token expires → /token/refresh/ → New access token received → User stays l
 
 ### Authentication Endpoints
 ```
-POST http://192.168.0.190:8000/api/auth/test-token/
-POST http://192.168.0.190:8000/api/auth/logout/
-GET  http://192.168.0.190:8000/api/auth/profile/
+POST http://172.16.16.161:8000/api/auth/test-token/
+POST http://172.16.16.161:8000/api/auth/logout/
+GET  http://172.16.16.161:8000/api/auth/profile/
 ```
 
 ### Token Management
 ```
-POST http://192.168.0.190:8000/api/token/refresh/
+POST http://172.16.16.161:8000/api/token/refresh/
 ```
 
 ### Assets Endpoints
 ```
-GET  http://192.168.0.190:8000/api/assets
-GET  http://192.168.0.190:8000/api/assets/123
-POST http://192.168.0.190:8000/api/assets
+GET  http://172.16.16.161:8000/api/assets
+GET  http://172.16.16.161:8000/api/assets/123
+POST http://172.16.16.161:8000/api/assets
 ```
 
 ### Maintenance Endpoints
 ```
-GET  http://192.168.0.190:8000/api/maintenance
-GET  http://192.168.0.190:8000/api/maintenance/123
+GET  http://172.16.16.161:8000/api/maintenance
+GET  http://172.16.16.161:8000/api/maintenance/123
 ```
 
 ## Usage Examples
@@ -176,7 +175,7 @@ The system now handles various authentication errors:
 
 ## Next Steps
 
-1. **Test with your authentication backend** at `http://192.168.0.190:8000`
+1. **Test with your authentication backend** at `http://172.16.16.161:8000`
 2. **Ensure your backend has these endpoints**:
    - `POST /api/auth/test-token/` for login
    - `POST /api/token/refresh/` for token refresh
@@ -186,7 +185,7 @@ The system now handles various authentication errors:
 
 ## Testing
 
-1. Start your authentication backend at `http://192.168.0.190:8000`
+1. Start your authentication backend at `http://172.16.16.161:8000`
 2. **All endpoints should be accessible** under `/api/`
 3. **Use real database credentials** (no more hardcoded values)
 4. Check browser console for API connection status
